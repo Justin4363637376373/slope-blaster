@@ -32,7 +32,13 @@ h2{font-family:"Bungee",Impact,sans-serif;font-weight:400;font-size:20px;margin:
 .game{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 @media (max-width:780px){.game{grid-template-columns:1fr}}
 .board{background:var(--panel);border-radius:14px;padding:10px;position:relative}
-canvas{width:100%;aspect-ratio:1/1;display:block;max-width:100%;border-radius:8px}
+canvas{width:100%;aspect-ratio:1/1;display:block;max-width:100%;border-radius:8px;margin:0 auto}
+@media (min-width:781px){canvas{width:min(100%,calc(100vh - 230px));min-width:360px}}
+.kbd{display:none;font-size:12px;color:var(--dim);text-align:center}
+.kbd kbd{font:inherit;font-weight:700;background:var(--btn);border:1px solid var(--btnh);border-radius:5px;padding:1px 6px;color:var(--text)}
+@media (hover:hover) and (pointer:fine){.kbd{display:block}}
+.opt .k{display:none;font-family:"Chakra Petch",sans-serif;font-size:11px;opacity:.7;margin-right:4px}
+@media (hover:hover) and (pointer:fine){.opt .k{display:inline}}
 .side{display:flex;flex-direction:column;gap:12px}
 .card{background:var(--panel);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
@@ -145,6 +151,7 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
         </div>
         <div class="help" id="lFacts"></div>
         <table class="tbl" id="lTable"></table>
+        <div class="kbd"><kbd>↑</kbd><kbd>↓</kbd> slope · <kbd>←</kbd><kbd>→</kbd> intercept</div>
       </div>
       <div class="card">
         <h2>The 3 rules</h2>
@@ -185,6 +192,7 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
         <div class="shots" id="shots"></div>
         <button class="fire" id="fire">FIRE</button>
         <button class="ghost" id="hint">Hint: show rise/run (−50 pts)</button>
+        <div class="kbd"><kbd>↑</kbd><kbd>↓</kbd> slope · <kbd>←</kbd><kbd>→</kbd> intercept · <kbd>Space</kbd> fire · <kbd>H</kbd> hint</div>
         <div class="msg" id="msg"></div>
       </div>
     </div>
@@ -205,6 +213,7 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
         <div class="opts" id="opts"></div>
         <div class="msg" id="smsg"></div>
         <button class="fire" id="snext" hidden>NEXT</button>
+        <div class="kbd"><kbd>1</kbd>–<kbd>4</kbd> answer · <kbd>Enter</kbd> next</div>
       </div>
     </div>
 
@@ -231,6 +240,7 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
           <ol class="steps" id="tSteps"></ol>
         </div>
         <button class="fire" id="tNext" hidden>NEXT</button>
+        <div class="kbd"><kbd>1</kbd>–<kbd>4</kbd> answer · <kbd>Enter</kbd> next</div>
       </div>
       <div class="card" id="tReport" hidden>
         <h2>Report Card</h2>
@@ -505,10 +515,22 @@ $('hint').onclick=()=>{if(B.done)return;B.hint=true;B.score=Math.max(0,B.score);
   const a=B.targets[0],c=B.targets[B.targets.length-1];
   $('msg').innerHTML='Slope = rise ÷ run = '+neg(c.y-a.y)+' ÷ '+neg(c.x-a.x)+'. Simplify it, then find where the line would cross the y-axis.';$('msg').className='msg';};
 document.addEventListener('keydown',e=>{
-  if(mode!=='blast')return;
-  const k={ArrowUp:'mUp',ArrowDown:'mDown',ArrowRight:'bUp',ArrowLeft:'bDown'}[e.key];
-  if(k){e.preventDefault();$(k).click()}
-  if(e.key===' '||e.key==='Enter'){ if(document.activeElement.tagName!=='BUTTON'){e.preventDefault();$('fire').click()} }
+  if(e.target.tagName==='INPUT'||e.metaKey||e.ctrlKey||e.altKey)return;
+  const onBtn=document.activeElement&&document.activeElement.tagName==='BUTTON';
+  const click=id=>{const el=$(id);if(el&&!el.hidden&&!el.disabled){el.click();return true}return false};
+  if(mode==='blast'||mode==='learn'){
+    const pre=mode==='learn'?'l':'';
+    const k={ArrowUp:pre+'mUp',ArrowDown:pre+'mDown',ArrowRight:pre+'bUp',ArrowLeft:pre+'bDown'}[e.key];
+    if(k){e.preventDefault();$(k).click();return}
+    if(mode==='blast'){
+      if((e.key===' '||e.key==='Enter')&&!onBtn){e.preventDefault();$('fire').click()}
+      if(e.key==='h'||e.key==='H')click('hint');
+    }
+    return;
+  }
+  const box=mode==='speed'?'opts':'tOpts',next=mode==='speed'?'snext':'tNext';
+  if(/^[1-4]$/.test(e.key)){const b=$(box).querySelectorAll('.opt')[+e.key-1];if(b){e.preventDefault();b.click()}return}
+  if((e.key==='Enter'||e.key===' ')&&!onBtn){if(click(next))e.preventDefault()}
 });
 
 // ---------- shared multiple-choice builders ----------
@@ -534,7 +556,7 @@ function newQ(){
   const m=pick(slopePool(SP.q>5?9:SP.q>2?4:1)), b=rnd(-6,6);
   const opts=makeOpts({m,b},eqCands(m,b,[{m:frac(b===0?m.n+1:b,1),b:m.d===1?m.n:b+1}]),eKey,()=>({m:pick(slopePool(9)),b:rnd(-6,6)}));
   SP.cur={m,b,opts};SP.start=performance.now();SP.locked=false;
-  $('opts').innerHTML='';opts.forEach(o=>{const bt=document.createElement('button');bt.className='opt';bt.innerHTML=eqHTML(o.m,o.b);
+  $('opts').innerHTML='';opts.forEach(o=>{const bt=document.createElement('button');bt.className='opt';bt.innerHTML='<span class="k">'+($('opts').children.length+1)+'</span>'+eqHTML(o.m,o.b);
     bt.onclick=()=>answer(o,bt);o.el=bt;$('opts').appendChild(bt)});
   $('smsg').textContent='';$('smsg').className='msg';$('snext').hidden=true;
   $('sq').textContent=SP.q+'/10';$('sbest').textContent='Best: '+best;$('sscore').textContent=SP.score;$('scombo').textContent='x'+SP.combo;
@@ -653,7 +675,7 @@ function showQ(){
   $('tPrompt').innerHTML=q.promptH;
   if(q.rows){$('tTable').hidden=false;$('tTable').innerHTML='<tr><th>x</th>'+q.rows.map(r=>'<td>'+neg(r.x)+'</td>').join('')+'</tr><tr><th>y</th>'+q.rows.map(r=>'<td>'+neg(r.y)+'</td>').join('')+'</tr>'}
   else $('tTable').hidden=true;
-  $('tOpts').innerHTML='';q.opts.forEach(o=>{const bt=document.createElement('button');bt.className='opt';bt.innerHTML=q.optH(o);bt.onclick=()=>tAnswer(o,bt);o.el=bt;$('tOpts').appendChild(bt)});
+  $('tOpts').innerHTML='';q.opts.forEach(o=>{const bt=document.createElement('button');bt.className='opt';bt.innerHTML='<span class="k">'+($('tOpts').children.length+1)+'</span>'+q.optH(o);bt.onclick=()=>tAnswer(o,bt);o.el=bt;$('tOpts').appendChild(bt)});
   $('tFeedback').hidden=true;$('tNext').hidden=true;
 }
 function tAnswer(o,bt){
