@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Slope Blaster</title>
+<meta name="description" content="A free linear equations game: slope, y-intercept, slope-intercept and point-slope form. Explore, play, and take a mastery test with a report card.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@400;600;700&display=swap">
 <style>
@@ -11,24 +12,25 @@
   color-scheme: dark;
   --bg:#0b1020; --panel:#141b33; --grid:#1f2a4d; --axis:#5a6aa8;
   --text:#e8ecff; --dim:#8f9acb; --laser:#ffd23f; --target:#ff5d8f;
-  --good:#3ddc97; --bad:#ff6b5a; --btn:#232d55; --btnh:#2e3a6e;
+  --good:#3ddc97; --bad:#ff6b5a; --btn:#232d55; --btnh:#2e3a6e; --blue:#6ec8ff;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);font-family:"Chakra Petch",system-ui,sans-serif;font-size:16px;padding-inline:16px;padding-block:16px 32px}
-.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
 h1{font-family:"Bungee",Impact,sans-serif;font-weight:400;font-size:clamp(26px,5vw,40px);margin:0;letter-spacing:1px;color:var(--laser);text-shadow:0 0 18px rgba(255,210,63,.35)}
 h1 span{color:var(--target)}
-.tabs{display:flex;gap:8px}
-.tab{font:inherit;font-weight:700;background:var(--btn);color:var(--dim);border:2px solid transparent;border-radius:10px;padding:8px 14px;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;font-size:13px}
+h2{font-family:"Bungee",Impact,sans-serif;font-weight:400;font-size:20px;margin:0;color:var(--laser)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{font:inherit;font-weight:700;background:var(--btn);color:var(--dim);border:2px solid transparent;border-radius:10px;padding:8px 12px;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;font-size:13px}
 .tab[aria-selected="true"]{color:var(--text);border-color:var(--laser)}
-.formula{background:var(--panel);border-radius:12px;padding:10px 14px;color:var(--dim);font-size:14px;display:flex;gap:18px;flex-wrap:wrap}
+.formula{background:var(--panel);border-radius:12px;padding:10px 14px;color:var(--dim);font-size:14px;display:flex;gap:8px 20px;flex-wrap:wrap}
 .formula b{color:var(--text)}
-.formula .m{color:var(--laser)} .formula .bb{color:var(--target)}
-.game{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
-@media (max-width:760px){.game{grid-template-columns:1fr}}
+.m{color:var(--laser)} .bb{color:var(--target)}
+.game{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+@media (max-width:780px){.game{grid-template-columns:1fr}}
 .board{background:var(--panel);border-radius:14px;padding:10px;position:relative}
 canvas{width:100%;aspect-ratio:1/1;display:block;max-width:100%;border-radius:8px}
 .side{display:flex;flex-direction:column;gap:12px}
@@ -37,60 +39,121 @@ canvas{width:100%;aspect-ratio:1/1;display:block;max-width:100%;border-radius:8p
 .stat small{display:block;color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
 .stat strong{font-family:"Bungee",Impact,sans-serif;font-weight:400;font-size:22px;font-variant-numeric:tabular-nums}
 .eq{font-family:"Bungee",Impact,sans-serif;font-weight:400;font-size:26px;text-align:center;padding:6px 0}
-.eq .m{color:var(--laser)} .eq .bb{color:var(--target)}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;font-size:.62em;line-height:1.05;text-align:center;margin:0 .08em}
+.fr>span:first-child{border-bottom:.12em solid currentColor;padding:0 .12em}
 .ctrl{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
 .ctrl label{grid-column:1/-1;font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
 .ctrl output{text-align:center;font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
 button.pm{font:inherit;font-size:22px;font-weight:700;width:48px;height:44px;border-radius:10px;border:none;background:var(--btn);color:var(--text);cursor:pointer}
 button.pm:hover{background:var(--btnh)}
-.fire{font-family:"Bungee",Impact,sans-serif;font-size:22px;letter-spacing:1px;border:none;border-radius:12px;padding:14px;background:var(--laser);color:#1a1300;cursor:pointer;box-shadow:0 4px 0 #b38f10}
+.fire{font-family:"Bungee",Impact,sans-serif;font-size:20px;letter-spacing:1px;border:none;border-radius:12px;padding:14px;background:var(--laser);color:#1a1300;cursor:pointer;box-shadow:0 4px 0 #b38f10}
 .fire:active{transform:translateY(3px);box-shadow:0 1px 0 #b38f10}
 .fire:disabled{opacity:.5;cursor:default}
+.fire.alt{background:var(--btn);color:var(--text);box-shadow:0 4px 0 #111833}
 .ghost{font:inherit;font-weight:600;background:transparent;border:2px dashed var(--btnh);color:var(--dim);border-radius:10px;padding:8px;cursor:pointer}
-.msg{min-height:44px;font-size:15px;line-height:1.35}
+.msg{min-height:44px;font-size:15px;line-height:1.45}
 .msg.good{color:var(--good)} .msg.bad{color:var(--bad)}
+.msg .m,.msg .bb{font-weight:700}
 .shots{display:flex;gap:6px;justify-content:center}
 .shots i{width:14px;height:14px;border-radius:50%;background:var(--laser);display:block}
 .shots i.used{background:var(--grid)}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.opt{font-family:"Bungee",Impact,sans-serif;font-weight:400;font-size:17px;padding:14px 6px;border-radius:12px;border:2px solid var(--grid);background:var(--btn);color:var(--text);cursor:pointer}
+.opt{font-family:"Bungee",Impact,sans-serif;font-weight:400;font-size:15px;padding:12px 4px;min-height:56px;border-radius:12px;border:2px solid var(--grid);background:var(--btn);color:var(--text);cursor:pointer}
 .opt:hover{border-color:var(--laser)}
+.opt .m,.opt .bb{color:inherit}
 .opt.right{background:var(--good);color:#04210f;border-color:var(--good)}
 .opt.wrong{background:var(--bad);color:#2a0400;border-color:var(--bad)}
 .timer{height:10px;background:var(--grid);border-radius:6px;overflow:hidden}
 .timer div{height:100%;background:var(--laser);width:100%}
-button:focus-visible{outline:3px solid var(--text);outline-offset:2px}
-.pop{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-family:"Bungee",Impact,sans-serif;font-size:clamp(28px,7vw,54px);color:var(--good);text-shadow:0 0 20px rgba(61,220,151,.6);pointer-events:none;opacity:0;transition:opacity .2s,transform .5s}
+button:focus-visible,input:focus-visible{outline:3px solid var(--text);outline-offset:2px}
+.pop{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-family:"Bungee",Impact,sans-serif;font-size:clamp(28px,7vw,54px);color:var(--good);text-shadow:0 0 20px rgba(61,220,151,.6);pointer-events:none;opacity:0;transition:opacity .2s,transform .5s;white-space:nowrap}
 .pop.show{opacity:1;transform:translate(-50%,-70%)}
 .rank{text-align:center;font-weight:700;color:var(--laser);letter-spacing:.08em;text-transform:uppercase;font-size:13px}
 .boss{color:var(--target);font-family:"Bungee",Impact,sans-serif;text-align:center;font-size:18px}
-.help{font-size:13px;color:var(--dim);line-height:1.45}
+.help{font-size:14px;color:var(--dim);line-height:1.5}
+.help b{color:var(--text)}
+.prompt{font-size:17px;font-weight:600;line-height:1.5}
+.prompt .big{display:block;font-family:"Bungee",Impact,sans-serif;font-weight:400;font-size:22px;text-align:center;margin-top:6px;color:var(--text)}
+.skill{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);border:1px solid var(--blue);border-radius:999px;padding:2px 8px;align-self:flex-start}
+.steps{margin:0;padding-left:22px;font-size:15px;line-height:1.6}
+.steps li{margin-bottom:4px}
+.verdict{font-weight:700;font-size:16px}
+.verdict.good{color:var(--good)} .verdict.bad{color:var(--bad)}
+.tbl{width:100%;border-collapse:collapse;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.tbl th,.tbl td{border:1px solid var(--grid);padding:6px 4px}
+.tbl th{color:var(--dim);font-size:13px}
+input.name{font:inherit;font-size:17px;padding:12px;border-radius:10px;border:2px solid var(--grid);background:var(--bg);color:var(--text);width:100%}
+.report{display:flex;flex-direction:column;gap:10px}
+.report .big{font-family:"Bungee",Impact,sans-serif;font-size:40px;text-align:center;color:var(--laser);line-height:1}
+.report .who{text-align:center;color:var(--dim);font-size:14px}
+.skillrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font-size:14px;border-bottom:1px solid var(--grid);padding-bottom:6px}
+.tag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:3px 8px}
+.tag.ok{background:rgba(61,220,151,.15);color:var(--good)}
+.tag.mid{background:rgba(255,210,63,.15);color:var(--laser)}
+.tag.no{background:rgba(255,107,90,.15);color:var(--bad)}
+.missed{font-size:13px;color:var(--dim);line-height:1.5;margin:0;padding-left:18px}
+details.teach{background:var(--panel);border-radius:14px;padding:14px;color:var(--dim);font-size:14px;line-height:1.55}
+details.teach summary{cursor:pointer;color:var(--text);font-weight:700}
+details.teach ul{margin:8px 0 0;padding-left:20px}
 @media (prefers-reduced-motion:reduce){.pop{transition:none}}
 </style>
 </head>
 <body>
 
-
 <div class="wrap">
   <header>
     <h1>Slope <span>Blaster</span></h1>
     <div class="tabs" role="tablist">
+      <button class="tab" id="tabLearn" role="tab" aria-selected="false">Learn</button>
       <button class="tab" id="tabBlast" role="tab" aria-selected="true">Laser Mode</button>
       <button class="tab" id="tabSpeed" role="tab" aria-selected="false">Speed Round</button>
-    <button class="tab" id="fsBtn" aria-label="Full screen">⛶ Full screen</button>
+      <button class="tab" id="tabTest" role="tab" aria-selected="false">Mastery Test</button>
+      <button class="tab" id="fsBtn" aria-label="Full screen">⛶ Full screen</button>
     </div>
   </header>
 
   <div class="formula">
     <span><b>y = <span class="m">m</span>x + <span class="bb">b</span></b></span>
-    <span><b class="m">m</b> = slope = rise ÷ run</span>
-    <span><b class="bb">b</b> = y-intercept (where it crosses the y-axis)</span>
+    <span><b class="m">m</b> = slope = rise ÷ run = (y₂ − y₁) ÷ (x₂ − x₁)</span>
+    <span><b class="bb">b</b> = y-intercept, where the line crosses the y-axis</span>
+    <span>Point-slope: <b>y − y₁ = <span class="m">m</span>(x − x₁)</b></span>
   </div>
 
   <div class="game">
     <div class="board">
       <canvas id="cv" width="800" height="800" aria-label="Coordinate grid"></canvas>
       <div class="pop" id="pop">HIT!</div>
+    </div>
+
+    <!-- Learn mode -->
+    <div class="side" id="learnSide" hidden>
+      <div class="card">
+        <h2>Explore the line</h2>
+        <div class="help">Change <b class="m">m</b> and <b class="bb">b</b> and watch the line move.</div>
+        <div class="eq" id="lEq"></div>
+        <div class="ctrl">
+          <label>Slope (m)</label>
+          <button class="pm" id="lmDown" aria-label="Lower slope">−</button>
+          <output id="lmOut"></output>
+          <button class="pm" id="lmUp" aria-label="Raise slope">+</button>
+        </div>
+        <div class="ctrl">
+          <label>Y-intercept (b)</label>
+          <button class="pm" id="lbDown" aria-label="Lower intercept">−</button>
+          <output id="lbOut"></output>
+          <button class="pm" id="lbUp" aria-label="Raise intercept">+</button>
+        </div>
+        <div class="help" id="lFacts"></div>
+        <table class="tbl" id="lTable"></table>
+      </div>
+      <div class="card">
+        <h2>The 3 rules</h2>
+        <div class="help">
+          <b>1. Start at b.</b> The line crosses the y-axis at (0, b).<br>
+          <b>2. Move with m.</b> Slope = rise ÷ run. From b, go right by the bottom number, then up (or down if m is negative) by the top number.<br>
+          <b>3. Read the sign.</b> m &gt; 0 goes uphill, m &lt; 0 goes downhill, m = 0 is flat.
+        </div>
+      </div>
     </div>
 
     <!-- Laser mode -->
@@ -144,7 +207,51 @@ button:focus-visible{outline:3px solid var(--text);outline-offset:2px}
         <button class="fire" id="snext" hidden>NEXT</button>
       </div>
     </div>
+
+    <!-- Mastery test -->
+    <div class="side" id="testSide" hidden>
+      <div class="card" id="tStart">
+        <h2>Mastery Test</h2>
+        <div class="help">10 questions on 5 skills: slope from two points, reading the y-intercept, graph to equation, point-slope to slope-intercept, and table to equation. No timer. <b>Every answer shows the full solution.</b> At the end you get a report card to show your teacher.</div>
+        <input class="name" id="tName" placeholder="Your name" maxlength="40" autocomplete="off">
+        <button class="fire" id="tGo">START TEST</button>
+      </div>
+      <div class="card" id="tQ" hidden>
+        <div class="stats">
+          <div class="stat"><small>Question</small><strong id="tNum">1/10</strong></div>
+          <div class="stat"><small>Correct</small><strong id="tRight">0</strong></div>
+          <div class="stat"><small>Streak</small><strong id="tStreak">0</strong></div>
+        </div>
+        <span class="skill" id="tSkill"></span>
+        <div class="prompt" id="tPrompt"></div>
+        <table class="tbl" id="tTable" hidden></table>
+        <div class="opts" id="tOpts"></div>
+        <div id="tFeedback" hidden>
+          <div class="verdict" id="tVerdict"></div>
+          <ol class="steps" id="tSteps"></ol>
+        </div>
+        <button class="fire" id="tNext" hidden>NEXT</button>
+      </div>
+      <div class="card" id="tReport" hidden>
+        <h2>Report Card</h2>
+        <div class="report" id="tReportBody"></div>
+        <button class="fire" id="tCopy">COPY RESULTS</button>
+        <button class="fire alt" id="tAgain">TAKE IT AGAIN</button>
+      </div>
+    </div>
   </div>
+
+  <details class="teach">
+    <summary>For teachers</summary>
+    <ul>
+      <li><b>Learn:</b> an interactive explorer. Change m and b and see the line, the rise/run triangle, and a table of values update live.</li>
+      <li><b>Laser Mode:</b> students build y = mx + b to hit targets. Levels move from positive whole-number slopes to negative and fractional slopes. Missed levels show the worked solution.</li>
+      <li><b>Speed Round:</b> 10 timed graph-to-equation questions for fluency.</li>
+      <li><b>Mastery Test:</b> 10 untimed questions, 2 per skill, easy then harder (fractional slopes). Each question shows step-by-step work. Students finish with a report card they can screenshot or copy into your LMS.</li>
+      <li><b>Aligned to:</b> CCSS 8.EE.B.6, 8.F.A.3, 8.F.B.4, and HSF-LE.A.2.</li>
+      <li>Free, no login, no ads. Works on Chromebooks, iPads, and phones. Nothing is sent anywhere.</li>
+    </ul>
+  </details>
 </div>
 
 <script>
@@ -155,24 +262,46 @@ const X=x=>PAD+(x+R)*U, Y=y=>PAD+(R-y)*U;
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const $=id=>document.getElementById(id);
 
-// ---------- helpers ----------
+// ---------- math + formatting helpers ----------
 function gcd(a,b){return b?gcd(b,a%b):Math.abs(a)}
 function frac(n,d){ if(d<0){n=-n;d=-d} const g=gcd(n,d)||1; return {n:n/g,d:d/g,v:n/d}; }
 function fstr(f){ return f.d===1? String(f.n) : f.n+'/'+f.d; }
+const neg=n=>n<0?'−'+(-n):String(n);
+const P=n=>n<0?'('+neg(n)+')':String(n);
+const term=n=>n>=0?' + '+n:' − '+(-n);
+const tz=n=>n===0?'':term(n);
+const pt=p=>'('+neg(p.x)+', '+neg(p.y)+')';
+const frH=(a,d)=>'<span class="fr"><span>'+a+'</span><span>'+d+'</span></span>';
+function fH(f){ return f.d===1? neg(f.n) : (f.n<0?'−':'')+frH(Math.abs(f.n),f.d); }
+function fT(f){ return fstr(f).replace('-','−'); }
+function coefH(f){ if(f.d===1) return f.n===1?'':f.n===-1?'−':neg(f.n); return (f.n<0?'−':'')+frH(Math.abs(f.n),f.d); }
+function coefT(f){ if(f.d===1) return f.n===1?'':f.n===-1?'−':neg(f.n); return (f.n<0?'−':'')+'('+Math.abs(f.n)+'/'+f.d+')'; }
 function eqHTML(f,b){
-  let mPart;
-  if(f.d===1&&f.n===1) mPart='';
-  else if(f.d===1&&f.n===-1) mPart='−';
-  else if(f.n===0) mPart='0';
-  else mPart=fstr(f).replace('-','−');
-  let s='y = <span class="m">'+mPart+'</span>x';
+  if(f.n===0) return 'y = <span class="bb">'+neg(b)+'</span>';
+  let s='y = <span class="m">'+coefH(f)+'</span>x';
   if(b>0) s+=' + <span class="bb">'+b+'</span>';
   else if(b<0) s+=' − <span class="bb">'+(-b)+'</span>';
   return s;
 }
-function eqText(f,b){ return eqHTML(f,b).replace(/<[^>]+>/g,''); }
+function eqText(f,b){ if(f.n===0) return 'y = '+neg(b); return 'y = '+coefT(f)+'x'+tz(b); }
+function psHTML(f,x1,y1){ return 'y'+tz(-y1)+' = <span class="m">'+coefH(f)+'</span>(x'+tz(-x1)+')'; }
+function psText(f,x1,y1){ return 'y'+tz(-y1)+' = '+coefT(f)+'(x'+tz(-x1)+')'; }
 const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const yAt=(m,b,x)=>m.n*x/m.d+b;
+function pointsOnLine(m,b,lim=8){const xs=[];for(let x=-lim;x<=lim;x++){if((m.n*x)%m.d===0){const y=yAt(m,b,x);if(Math.abs(y)<=8)xs.push(x)}}return xs}
+
+// worked-solution building blocks
+function slopeStep(p1,p2,m){
+  const dy=p2.y-p1.y,dx=p2.x-p1.x;
+  return 'Slope: m = (y₂ − y₁) ÷ (x₂ − x₁) = ('+neg(p2.y)+' − '+P(p1.y)+') ÷ ('+neg(p2.x)+' − '+P(p1.x)+') = '+neg(dy)+' ÷ '+neg(dx)+' = <b class="m">'+fH(m)+'</b>';
+}
+function bStep(p,m,b){
+  const mx=m.n*p.x/m.d;
+  return 'Intercept: plug '+pt(p)+' into y = mx + b. '+neg(p.y)+' = '+fH(m)+'·'+P(p.x)+' + b, so '+neg(p.y)+' = '+neg(mx)+' + b. Then b = '+neg(p.y)+' − '+P(mx)+' = <b class="bb">'+neg(b)+'</b>';
+}
+function riseRunWords(m){ if(m.n===0) return 'Slope 0 means the line is flat.'; return 'From (0, b), go right '+m.d+' and '+(m.n>0?'up ':'down ')+Math.abs(m.n)+'. That gives m = '+fH(m)+'.'; }
 
 // ---------- sound ----------
 let ac=null;
@@ -195,6 +324,7 @@ function drawFx(){for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;
   if(p.life<=0){parts.splice(i,1);continue}ctx.globalAlpha=Math.min(1,p.life);ctx.fillStyle=p.col;ctx.fillRect(p.x-3,p.y-3,6,6)}ctx.globalAlpha=1}
 function rankFor(sc){const r=[[0,'Rookie'],[500,'Cadet'],[1200,'Line Rider'],[2500,'Slope Sniper'],[4500,'Intercept Ace'],[7000,'Slope Legend']];let t=r[0][1];r.forEach(([v,n])=>{if(sc>=v)t=n});return t}
 let best=0;try{best=+localStorage.getItem('sbBest')||0}catch(e){}
+function pop(text){const p=$('pop');p.textContent=text;p.classList.add('show');setTimeout(()=>p.classList.remove('show'),650)}
 
 // ---------- drawing ----------
 function drawGrid(){
@@ -214,10 +344,10 @@ function drawGrid(){
     ctx.fillText(i,X(i),Y(0)+6);
     ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(i,X(0)-6,Y(i));ctx.textAlign='center';ctx.textBaseline='top';
   }
+  ctx.fillText('x',X(R)-8,Y(0)-26);ctx.textAlign='left';ctx.fillText('y',X(0)+8,Y(R)+2);
 }
-function lineEnds(m,b){ return [[-R,m*-R+b],[R,m*R+b]]; }
 function drawLine(m,b,color,w,progress=1,dash){
-  const [[x1,y1],[x2,y2]]=lineEnds(m,b);
+  const x1=-R,y1=m*-R+b,x2=R,y2=m*R+b;
   const xe=x1+(x2-x1)*progress, ye=y1+(y2-y1)*progress;
   ctx.save();ctx.beginPath();ctx.rect(PAD,PAD,S-2*PAD,S-2*PAD);ctx.clip();
   ctx.strokeStyle=color;ctx.lineWidth=w;ctx.lineCap='round';
@@ -225,118 +355,155 @@ function drawLine(m,b,color,w,progress=1,dash){
   ctx.shadowColor=color;ctx.shadowBlur=dash?0:16;
   ctx.beginPath();ctx.moveTo(X(x1),Y(y1));ctx.lineTo(X(xe),Y(ye));ctx.stroke();ctx.restore();
 }
+function label(text,px,py,col,left){
+  ctx.font='700 18px "Chakra Petch",sans-serif';ctx.textBaseline='bottom';
+  const w=ctx.measureText(text).width;let lx=left?px-20-w:px+20;if(lx+w>S-8)lx=px-20-w;if(lx<8)lx=px+20;
+  let ly=py-10;if(ly<28)ly=py+34;
+  ctx.fillStyle='rgba(11,16,32,.75)';ctx.fillRect(lx-4,ly-22,w+8,24);
+  ctx.fillStyle=col;ctx.textAlign='left';ctx.fillText(text,lx,ly);
+}
 function drawTarget(x,y,hit,t){
   const cx=X(x),cy=Y(y),col=hit?css('--good'):css('--target');
   const pulse=hit?0:Math.sin(t/200)*3;
   ctx.save();ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=3;ctx.shadowColor=col;ctx.shadowBlur=12;
   ctx.beginPath();ctx.arc(cx,cy,16+pulse,0,Math.PI*2);ctx.stroke();
   ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fill();ctx.restore();
-  ctx.fillStyle=col;ctx.font='700 18px "Chakra Petch",sans-serif';ctx.textAlign='left';ctx.textBaseline='bottom';
-  const lx=cx+20>S-110?cx-120:cx+20;
-  ctx.fillText('('+x+', '+y+')',lx,cy-10);
+  label('('+x+', '+y+')',cx,cy,col);
 }
-function drawDot(x,y,col){ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(x),Y(y),8,0,Math.PI*2);ctx.fill();}
+function drawPt(x,y,col,withLabel=true,left=false){
+  ctx.save();ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=12;ctx.beginPath();ctx.arc(X(x),Y(y),9,0,Math.PI*2);ctx.fill();ctx.restore();
+  if(withLabel)label('('+x+', '+y+')',X(x),Y(y),col,left);
+}
+function drawRiseRun(ax,ay,bx,by){
+  if(ax===bx)return;
+  ctx.save();ctx.strokeStyle=css('--blue');ctx.setLineDash([7,6]);ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(X(ax),Y(ay));ctx.lineTo(X(bx),Y(ay));ctx.lineTo(X(bx),Y(by));ctx.stroke();ctx.restore();
+  ctx.fillStyle=css('--blue');ctx.font='700 18px "Chakra Petch",sans-serif';
+  ctx.textAlign='center';ctx.textBaseline=by>=ay?'top':'bottom';
+  ctx.fillText('run '+(bx-ax),(X(ax)+X(bx))/2,Y(ay)+(by>=ay?8:-8));
+  if(by!==ay){const right=X(bx)+10<S-90;ctx.textAlign=right?'left':'right';ctx.textBaseline='middle';
+    ctx.fillText('rise '+(by-ay),X(bx)+(right?10:-10),(Y(ay)+Y(by))/2);}
+}
 
-// ---------- LASER MODE ----------
-const B={level:1,score:0,streak:0,shots:3,m:frac(1,1),b:0,targets:[],hint:false,missLines:[],anim:null,done:false};
+// slope choices shared by the controls
+const MS=(()=>{const s=new Set(),out=[];
+  [[-4,1],[-3,1],[-5,2],[-2,1],[-3,2],[-4,3],[-1,1],[-2,3],[-1,2],[-1,3],[0,1],[1,3],[1,2],[2,3],[1,1],[4,3],[3,2],[2,1],[5,2],[3,1],[4,1]]
+  .forEach(([n,d])=>{const f=frac(n,d);const k=fstr(f);if(!s.has(k)){s.add(k);out.push(f)}});
+  return out.sort((a,b)=>a.v-b.v);})();
+const ONE=MS.findIndex(f=>f.n===1&&f.d===1);
 function slopePool(level){
   const ints=[1,2,3], negs=[-1,-2,-3];
   if(level<=2) return ints.map(n=>frac(n,1));
   if(level<=4) return ints.concat(negs).map(n=>frac(n,1));
   return ints.concat(negs).map(n=>frac(n,1)).concat([frac(1,2),frac(-1,2),frac(3,2),frac(-3,2),frac(2,3),frac(-2,3),frac(1,3),frac(-1,3)]);
 }
-function allowedM(){ // player's slope choices
-  const s=new Set(),out=[];
-  [[-4,1],[-3,1],[-5,2],[-2,1],[-3,2],[-4,3],[-1,1],[-2,3],[-1,2],[-1,3],[0,1],[1,3],[1,2],[2,3],[1,1],[4,3],[3,2],[2,1],[5,2],[3,1],[4,1]]
-    .forEach(([n,d])=>{const f=frac(n,d);const k=fstr(f);if(!s.has(k)){s.add(k);out.push(f)}});
-  return out.sort((a,b)=>a.v-b.v);
+
+// ---------- LEARN MODE ----------
+const L={mi:MS.findIndex(f=>f.n===1&&f.d===2),b:2};
+function updateLearn(){
+  const m=MS[L.mi],b=L.b;
+  $('lEq').innerHTML=eqHTML(m,b);$('lmOut').textContent=fT(m);$('lbOut').textContent=neg(b);
+  let t='<b class="bb">b = '+neg(b)+'</b>: the line crosses the y-axis at (0, '+neg(b)+').<br>';
+  t+='<b class="m">m = '+fH(m)+'</b>: '+(m.n===0?'slope 0 means a flat, horizontal line.':'from (0, '+neg(b)+'), go right '+m.d+' and '+(m.n>0?'up ':'down ')+Math.abs(m.n)+'. '+(m.n>0?'Positive slope goes uphill.':'Negative slope goes downhill.'));
+  $('lFacts').innerHTML=t;
+  let rows='<tr><th>x</th>',ys='<tr><th>y</th>';
+  for(let x=-2;x<=2;x++){rows+='<td>'+neg(x)+'</td>';ys+='<td>'+fH(frac(m.n*x+b*m.d,m.d))+'</td>'}
+  $('lTable').innerHTML=rows+'</tr>'+ys+'</tr>';
 }
-const MS=allowedM();
+function drawLearn(){
+  drawGrid();const m=MS[L.mi];
+  drawLine(m.v,L.b,css('--laser'),6);
+  if(m.n!==0 && Math.abs(L.b+m.n)<=R) drawRiseRun(0,L.b,m.d,L.b+m.n);
+  drawPt(0,L.b,css('--target'),true,true);
+  drawFx();
+}
+$('lmUp').onclick=()=>{L.mi=Math.min(MS.length-1,L.mi+1);beep(660,.04);updateLearn()};
+$('lmDown').onclick=()=>{L.mi=Math.max(0,L.mi-1);beep(440,.04);updateLearn()};
+$('lbUp').onclick=()=>{L.b=Math.min(8,L.b+1);beep(660,.04);updateLearn()};
+$('lbDown').onclick=()=>{L.b=Math.max(-8,L.b-1);beep(440,.04);updateLearn()};
+
+// ---------- LASER MODE ----------
+const B={level:1,score:0,streak:0,shots:3,m:frac(1,1),b:0,targets:[],hint:false,missLines:[],anim:null,done:false};
 function newLevel(){
-  let m,b,x1,x2,y1,y2,ok=false;const boss=B.level%5===0;$('bossTag').hidden=!boss;
-  while(!ok){
+  let m,b,xs,chosen;const boss=B.level%5===0;$('bossTag').hidden=!boss;
+  for(;;){
     m=pick(slopePool(B.level)); b=rnd(-6,6);
-    const xs=[];for(let x=-9;x<=9;x++){const y=m.v*x+b;if(Number.isInteger(Math.round(y*1e6)/1e6)&&Math.abs(y)<=9&&x!==0)xs.push(x)}
+    xs=[];for(let x=-9;x<=9;x++){const y=m.v*x+b;if(Number.isInteger(Math.round(y*1e6)/1e6)&&Math.abs(y)<=9&&x!==0)xs.push(x)}
     const need=boss?3:2; if(xs.length<need)continue;
-    const chosen=[];let tries=0;
+    chosen=[];let tries=0;
     while(chosen.length<need&&tries<50){tries++;const c=pick(xs);if(chosen.every(o=>Math.abs(o-c)>=Math.max(2,m.d)))chosen.push(c)}
     if(chosen.length<need)continue;
-    chosen.sort((a,c)=>a-c);x1=chosen;ok=true;
+    chosen.sort((a,c)=>a-c);break;
   }
-  B.answer={m,b}; B.targets=x1.map(x=>({x,y:Math.round(m.v*x+b),hit:false}));
-  B.shots=3;B.hint=false;B.missLines=[];B.done=false;
-  B.mi=MS.findIndex(f=>f.n===1&&f.d===1);B.m=MS[B.mi];B.b=0;
+  B.answer={m,b}; B.targets=chosen.map(x=>({x,y:Math.round(m.v*x+b),hit:false}));
+  B.shots=3;B.hint=false;B.missLines=[];B.done=false;B.lastHit=null;
+  B.mi=ONE;B.m=MS[B.mi];B.b=0;
   $('msg').textContent='Level '+B.level+'. Line up the shot.';$('msg').className='msg';
   $('fire').textContent='FIRE';$('hint').disabled=false;
   updateBlastUI();
 }
 function updateBlastUI(){
   $('lvl').textContent=B.level;$('rank').textContent='Rank: '+rankFor(B.score);$('score').textContent=B.score;$('streak').textContent=B.streak;
-  $('mOut').textContent=fstr(B.m);$('bOut').textContent=B.b;$('eq').innerHTML=eqHTML(B.m,B.b);
+  $('mOut').textContent=fT(B.m);$('bOut').textContent=neg(B.b);$('eq').innerHTML=eqHTML(B.m,B.b);
   $('shots').innerHTML=[0,1,2].map(i=>'<i class="'+(i>=B.shots?'used':'')+'"></i>').join('');
 }
 function drawBlast(t){
   drawGrid();
   B.missLines.forEach(l=>drawLine(l.m,l.b,'rgba(255,107,90,.45)',3,1,[10,8]));
-  if(B.hint){
-    const a=B.targets[0],c=B.targets[B.targets.length-1];ctx.save();ctx.strokeStyle=css('--dim');ctx.setLineDash([6,6]);ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(X(a.x),Y(a.y));ctx.lineTo(X(c.x),Y(a.y));ctx.lineTo(X(c.x),Y(c.y));ctx.stroke();ctx.restore();
-    ctx.fillStyle=css('--text');ctx.font='700 18px "Chakra Petch",sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
-    ctx.fillText('run = '+(c.x-a.x),(X(a.x)+X(c.x))/2,Y(a.y)+(c.y>a.y?8:-28));
-    ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('rise = '+(c.y-a.y),X(c.x)+10,(Y(a.y)+Y(c.y))/2);
-  }
-  // b marker on y-axis for current aim
+  const a=B.targets[0],c=B.targets[B.targets.length-1];
+  if(B.hint||B.done) drawRiseRun(a.x,a.y,c.x,c.y);
   ctx.save();ctx.strokeStyle=css('--target');ctx.lineWidth=2;ctx.setLineDash([4,4]);
   ctx.beginPath();ctx.arc(X(0),Y(B.b),11,0,Math.PI*2);ctx.stroke();ctx.restore();
   if(B.anim){
     const p=Math.min(1,(t-B.anim.start)/450);
     drawLine(B.anim.m,B.anim.b,css('--laser'),6,p);
-    if(p>=1){const a=B.anim;B.anim=null;resolveShot(a)}
+    if(p>=1){const an=B.anim;B.anim=null;resolveShot(an)}
   } else if(B.done && B.lastHit){ drawLine(B.lastHit.m,B.lastHit.b,css('--laser'),6,1); }
   B.targets.forEach(tg=>drawTarget(tg.x,tg.y,tg.hit,t));
   drawFx();
 }
 function resolveShot(a){
   let hits=0;B.targets.forEach(tg=>{if(Math.abs(a.m*tg.x+a.b-tg.y)<1e-6){tg.hit=true;hits++;boom(tg.x,tg.y,css('--good'))}});
+  const A=B.answer,p1=B.targets[0],p2=B.targets[B.targets.length-1];
   if(hits===B.targets.length){
     shake=18;if(B.targets.length>2||B.streak>=2)confetti();
     const pts=([300,150,50][2-B.shots]||50)*(B.targets.length>2?2:1);
     const gain=Math.max(10,pts-(B.hint?50:0))+B.streak*25;
     B.score+=gain;B.streak++;B.done=true;B.lastHit=a;
-    $('msg').textContent='All targets down! +'+gain+'. Equation: '+eqText(B.m,B.b);$('msg').className='msg good';
+    $('msg').innerHTML='All targets down! +'+gain+'<br>'+eqHTML(B.m,B.b)+'. Rise '+(p2.y-p1.y)+' over run '+(p2.x-p1.x)+' = '+fH(A.m)+'.';$('msg').className='msg good';
     $('fire').textContent='NEXT LEVEL';$('hint').disabled=true;pop(B.targets.length>2?'BOSS DOWN!':B.streak>=5?'UNSTOPPABLE!':B.streak>=3?'ON FIRE!':'HIT!');win();
   } else {
     B.targets.forEach(tg=>tg.hit=false);
     B.missLines.push({m:a.m,b:a.b});
     lose();
     if(B.shots===0){
-      B.streak=0;B.done=true;B.lastHit={m:B.answer.m.v,b:B.answer.b};
-      $('msg').innerHTML='Out of shots. The answer was <b>'+eqText(B.answer.m,B.answer.b)+'</b>. Slope = rise ÷ run between the dots.';$('msg').className='msg bad';
-      $('fire').textContent='NEXT LEVEL';$('hint').disabled=true;
+      B.streak=0;B.done=true;B.lastHit={m:A.m.v,b:A.b};
+      $('msg').innerHTML='Out of shots. Here is how to get it:<ol class="steps"><li>'+slopeStep(p1,p2,A.m)+'</li><li>'+bStep(p1,A.m,A.b)+'</li><li>Answer: <b>'+eqHTML(A.m,A.b)+'</b></li></ol>';$('msg').className='msg bad';
+      $('fire').textContent='TRY A NEW LEVEL';$('hint').disabled=true;
     } else {
       shake=8;let tip=hits>0?'Grazed '+hits+' target'+(hits>1?'s':'')+'. ':'Missed. ';
-      const am=B.answer.m.v;
-      if(Math.abs(B.m.v-am)>1e-9) tip+=(B.m.v>am?'Slope too steep upward. Lower m.':'Slope too low. Raise m.');
-      else tip+='Slope is right! Now fix b (where it crosses the y-axis).';
+      const am=A.m.v;
+      if(Math.abs(B.m.v-am)>1e-9) tip+=(B.m.v>am?'Slope is too big. Lower m.':'Slope is too small. Raise m.');
+      else tip+='Slope is right! Now fix b, where the line crosses the y-axis.';
       $('msg').textContent=tip;$('msg').className='msg bad';
     }
   }
   updateBlastUI();
 }
-function pop(text){const p=$('pop');p.textContent=text;p.classList.add('show');setTimeout(()=>p.classList.remove('show'),650)}
 $('mUp').onclick=()=>{if(B.done)return;B.mi=Math.min(MS.length-1,B.mi+1);B.m=MS[B.mi];beep(660,.04);updateBlastUI()};
 $('mDown').onclick=()=>{if(B.done)return;B.mi=Math.max(0,B.mi-1);B.m=MS[B.mi];beep(440,.04);updateBlastUI()};
 $('bUp').onclick=()=>{if(B.done)return;B.b=Math.min(9,B.b+1);beep(660,.04);updateBlastUI()};
 $('bDown').onclick=()=>{if(B.done)return;B.b=Math.max(-9,B.b-1);beep(440,.04);updateBlastUI()};
 $('fire').onclick=()=>{
   if(B.anim)return;
-  if(B.done){ if(B.lastHit&&B.streak>0)B.level++; else if(B.level>1&&B.shots===0){} ; B.lastHit=null; newLevel(); return; }
+  if(B.done){ if(B.lastHit&&B.streak>0)B.level++; newLevel(); return; }
   if(B.shots<=0)return;
   B.shots--;beep(880,.15,'sawtooth',.04);
   B.anim={m:B.m.v,b:B.b,start:performance.now()};updateBlastUI();
 };
-$('hint').onclick=()=>{if(B.done)return;B.hint=true;$('hint').disabled=true;
-  const a=B.targets[0],c=B.targets[B.targets.length-1];$('msg').textContent='Slope = rise ÷ run = '+(c.y-a.y)+' ÷ '+(c.x-a.x)+'. Simplify it!';$('msg').className='msg';};
+$('hint').onclick=()=>{if(B.done)return;B.hint=true;B.score=Math.max(0,B.score);$('hint').disabled=true;
+  const a=B.targets[0],c=B.targets[B.targets.length-1];
+  $('msg').innerHTML='Slope = rise ÷ run = '+neg(c.y-a.y)+' ÷ '+neg(c.x-a.x)+'. Simplify it, then find where the line would cross the y-axis.';$('msg').className='msg';};
 document.addEventListener('keydown',e=>{
   if(mode!=='blast')return;
   const k={ArrowUp:'mUp',ArrowDown:'mDown',ArrowRight:'bUp',ArrowLeft:'bDown'}[e.key];
@@ -344,22 +511,30 @@ document.addEventListener('keydown',e=>{
   if(e.key===' '||e.key==='Enter'){ if(document.activeElement.tagName!=='BUTTON'){e.preventDefault();$('fire').click()} }
 });
 
+// ---------- shared multiple-choice builders ----------
+const eKey=o=>fstr(o.m)+'|'+o.b;
+function eqCands(m,b,extra=[]){
+  const c=extra.slice();
+  c.push({m:frac(-m.n,m.d),b},{m,b:-b});
+  if(m.n!==0)c.push({m:frac(m.d*Math.sign(m.n),Math.abs(m.n)),b});
+  c.push({m,b:b+pick([-2,-1,1,2])},{m:frac(-m.n,m.d),b:-b},{m:frac(m.n+m.d,m.d),b},{m,b:b+pick([-3,3])});
+  return c;
+}
+function makeOpts(correct,cands,key,randGen){
+  const opts=[Object.assign({},correct,{ok:true})],seen=new Set([key(correct)]);
+  for(const c of cands){if(opts.length>=4)break;const k=key(c);if(!seen.has(k)){seen.add(k);opts.push(c)}}
+  let guard=0;while(opts.length<4&&guard++<200){const c=randGen();const k=key(c);if(!seen.has(k)){seen.add(k);opts.push(c)}}
+  return shuffle(opts);
+}
+
 // ---------- SPEED MODE ----------
 const SP={q:1,score:0,combo:1,cur:null,start:0,limit:15000,locked:false};
 function newQ(){
   if(SP.q>10){endSpeed();return}
   const m=pick(slopePool(SP.q>5?9:SP.q>2?4:1)), b=rnd(-6,6);
-  const key=(f,bb)=>fstr(f)+'|'+bb;
-  const opts=[{m,b,ok:true}],seen=new Set([key(m,b)]);
-  const cands=[
-    {m:frac(-m.n,m.d),b},{m,b:-b},{m:frac(m.d*(m.n<0?-1:1),Math.abs(m.n)),b},
-    {m:frac(b===0?m.n+1:b,1),b:m.d===1?m.n:b+1},{m,b:b+pick([-2,-1,1,2])},{m:frac(m.n+m.d,m.d),b},{m:frac(-m.n,m.d),b:-b}
-  ];
-  for(const c of cands){ if(opts.length>=4)break; const k=key(c.m,c.b); if(!seen.has(k)&&Math.abs(c.b)<=9){seen.add(k);opts.push(c)} }
-  while(opts.length<4){const c={m:pick(slopePool(9)),b:rnd(-6,6)};const k=key(c.m,c.b);if(!seen.has(k)){seen.add(k);opts.push(c)}}
-  opts.sort(()=>Math.random()-.5);
+  const opts=makeOpts({m,b},eqCands(m,b,[{m:frac(b===0?m.n+1:b,1),b:m.d===1?m.n:b+1}]),eKey,()=>({m:pick(slopePool(9)),b:rnd(-6,6)}));
   SP.cur={m,b,opts};SP.start=performance.now();SP.locked=false;
-  $('opts').innerHTML='';opts.forEach(o=>{const bt=document.createElement('button');bt.className='opt';bt.innerHTML=eqHTML(o.m,o.b).replace(/<span[^>]*>|<\/span>/g,'');
+  $('opts').innerHTML='';opts.forEach(o=>{const bt=document.createElement('button');bt.className='opt';bt.innerHTML=eqHTML(o.m,o.b);
     bt.onclick=()=>answer(o,bt);o.el=bt;$('opts').appendChild(bt)});
   $('smsg').textContent='';$('smsg').className='msg';$('snext').hidden=true;
   $('sq').textContent=SP.q+'/10';$('sbest').textContent='Best: '+best;$('sscore').textContent=SP.score;$('scombo').textContent='x'+SP.combo;
@@ -368,13 +543,13 @@ function answer(o,bt){
   if(SP.locked)return;SP.locked=true;
   const left=Math.max(0,SP.limit-(performance.now()-SP.start));
   SP.cur.opts.forEach(x=>{if(x.ok)x.el.classList.add('right')});
+  const m=SP.cur.m,b=SP.cur.b;
   if(o&&o.ok){
     const gain=Math.round((50+left/SP.limit*100)*SP.combo);SP.score+=gain;SP.combo=Math.min(5,SP.combo+1);
-    const tg=SP.cur;boom(0,tg.b,css('--good'),30);shake=10;$('smsg').textContent='Correct! +'+gain+(SP.combo>2?'  Combo x'+SP.combo:'');$('smsg').className='msg good';win();pop('NICE!');
+    boom(0,b,css('--good'),30);shake=10;$('smsg').textContent='Correct! +'+gain+(SP.combo>2?'  Combo x'+SP.combo:'');$('smsg').className='msg good';win();pop('NICE!');
   } else {
     if(bt)bt.classList.add('wrong');SP.combo=1;
-    const m=SP.cur.m,b=SP.cur.b;
-    $('smsg').textContent=(o?'Nope. ':'Time! ')+'Crosses y-axis at '+b+' → b = '+b+'. Slope = '+fstr(m)+'.';$('smsg').className='msg bad';lose();
+    $('smsg').innerHTML=(o?'Not quite. ':'Time! ')+'It crosses the y-axis at (0, '+neg(b)+'), so b = '+neg(b)+'. '+riseRunWords(m);$('smsg').className='msg bad';lose();
   }
   $('sscore').textContent=SP.score;$('scombo').textContent='x'+SP.combo;
   SP.q++;if(SP.q>10)$('snext').textContent='SEE RESULTS';$('snext').hidden=false;$('snext').focus();
@@ -390,23 +565,161 @@ function endSpeed(){
   if(nb||g==='S'||g==='A'){confetti();win()}
 }
 function drawSpeed(t){
-  drawGrid();drawFx();
-  if(!SP.cur)return;
-  drawLine(SP.cur.m.v,SP.cur.b,css('--laser'),6);
-  if(SP.locked){ // reveal intercept and rise/run
-    drawDot(0,SP.cur.b,css('--target'));
+  drawGrid();
+  if(SP.cur){
+    drawLine(SP.cur.m.v,SP.cur.b,css('--laser'),6);
+    if(SP.locked){ if(SP.cur.m.n!==0)drawRiseRun(0,SP.cur.b,SP.cur.m.d,SP.cur.b+SP.cur.m.n); drawPt(0,SP.cur.b,css('--target'),true,true); }
+    else {const left=Math.max(0,SP.limit-(t-SP.start));$('tbar').style.width=(left/SP.limit*100)+'%';if(left<=0)answer(null,null)}
   }
-  if(!SP.locked){const left=Math.max(0,SP.limit-(t-SP.start));$('tbar').style.width=(left/SP.limit*100)+'%';if(left<=0)answer(null,null)}
+  drawFx();
+}
+
+// ---------- MASTERY TEST ----------
+const SKILLS={slope:'Slope from two points',intercept:'Read the y-intercept',graph:'Graph → equation',pointslope:'Point-slope → slope-intercept',table:'Table → equation'};
+const T={qs:[],i:0,right:0,streak:0,log:[],name:'',t0:0,locked:false,state:'start'};
+try{$('tName').value=localStorage.getItem('sbName')||''}catch(e){}
+function genQ(type,hard){
+  const pool=hard?slopePool(9):slopePool(4);
+  for(let guard=0;guard<500;guard++){
+    const m=pick(pool),b=rnd(-6,6);
+    const xs=pointsOnLine(m,b).filter(x=>x!==0);
+    const q={type,m,b,hard};
+    if(type==='slope'){
+      if(xs.length<2)continue;
+      const x1=pick(xs),x2=pick(xs);if(Math.abs(x2-x1)<2)continue;
+      const [a,c]=x1<x2?[x1,x2]:[x2,x1];
+      q.p1={x:a,y:yAt(m,b,a)};q.p2={x:c,y:yAt(m,b,c)};
+      q.promptH='Find the slope of the line through <b>'+pt(q.p1)+'</b> and <b>'+pt(q.p2)+'</b>.';
+      q.promptT='Slope through '+pt(q.p1)+' and '+pt(q.p2);
+      const cands=[frac(-m.n,m.d),frac(m.d*Math.sign(m.n),Math.abs(m.n)),frac(-m.d*Math.sign(m.n),Math.abs(m.n)),frac(m.n+m.d,m.d),frac(m.n*2,m.d)].map(f=>({f}));
+      q.opts=makeOpts({f:m},cands,o=>fstr(o.f),()=>({f:pick(slopePool(9))}));
+      q.optH=o=>'m = '+fH(o.f);q.ansT='m = '+fT(m);
+      q.steps=[slopeStep(q.p1,q.p2,m),'Always subtract in the same order: y₂ − y₁ on top, x₂ − x₁ on the bottom.'];
+      return q;
+    }
+    if(type==='intercept'){
+      const cands=[-b,b+1,b-1,m.n,b+2].map(v=>({v}));
+      const xi=-b*m.d/m.n;if(Number.isInteger(xi))cands.unshift({v:xi});
+      q.promptH='What is the <b>y-intercept</b> of the yellow line?';q.promptT='y-intercept of a graphed line';
+      q.opts=makeOpts({v:b},cands,o=>String(o.v),()=>({v:rnd(-8,8)}));
+      q.optH=o=>'b = '+neg(o.v);q.ansT='b = '+neg(b);
+      q.steps=['The y-intercept is where the line crosses the y-axis (where x = 0).','It crosses at <b>(0, '+neg(b)+')</b>, so <b class="bb">b = '+neg(b)+'</b>.','Careful: the x-intercept (where it crosses the x-axis) is a different point.'];
+      return q;
+    }
+    if(type==='graph'){
+      q.promptH='Which equation matches the yellow line?';q.promptT='Equation of a graphed line';
+      q.opts=makeOpts({m,b},eqCands(m,b),eKey,()=>({m:pick(pool),b:rnd(-6,6)}));
+      q.optH=o=>eqHTML(o.m,o.b);q.ansT=eqText(m,b);
+      q.steps=['Find b: the line crosses the y-axis at (0, '+neg(b)+'), so <b class="bb">b = '+neg(b)+'</b>.','Find m: '+riseRunWords(m),'Put it together: <b>'+eqHTML(m,b)+'</b>'];
+      return q;
+    }
+    if(type==='pointslope'){
+      if(!xs.length)continue;
+      const x1=pick(xs),y1=yAt(m,b,x1),mx=m.n*x1/m.d;
+      q.p1={x:x1,y:y1};
+      q.promptH='Rewrite in slope-intercept form (y = mx + b):<span class="big">'+psHTML(m,x1,y1)+'</span>';
+      q.promptT='Convert '+psText(m,x1,y1);
+      q.opts=makeOpts({m,b},eqCands(m,b,[{m,b:y1+mx},{m,b:y1-x1},{m,b:-mx-y1}]),eKey,()=>({m,b:rnd(-9,9)}));
+      q.optH=o=>eqHTML(o.m,o.b);q.ansT=eqText(m,b);
+      q.steps=['Distribute '+fH(m)+': y'+tz(-y1)+' = '+coefH(m)+'x'+tz(-mx),
+        (y1===0?'Nothing to move: y is already alone.':(y1>0?'Add '+y1:'Subtract '+(-y1))+' on both sides: y = '+coefH(m)+'x'+tz(-mx)+tz(y1)),
+        'Combine: '+neg(-mx)+(y1>=0?' + '+y1:' − '+(-y1))+' = '+neg(b)+', so <b>'+eqHTML(m,b)+'</b>'];
+      return q;
+    }
+    if(type==='table'){
+      const step=m.d===1?pick([1,2]):m.d;
+      const starts=xs.filter(x=>xs.includes(x+step)&&xs.includes(x+2*step)&&xs.includes(x+3*step));
+      if(!starts.length)continue;
+      const x0=pick(starts);q.rows=[0,1,2,3].map(k=>({x:x0+k*step,y:yAt(m,b,x0+k*step)}));
+      q.promptH='These points are on a line. Which equation is it?';q.promptT='Equation from a table';
+      q.opts=makeOpts({m,b},eqCands(m,b,[{m:frac(step,m.n*step/m.d||1),b}]),eKey,()=>({m:pick(pool),b:rnd(-6,6)}));
+      q.optH=o=>eqHTML(o.m,o.b);q.ansT=eqText(m,b);
+      q.steps=[slopeStep(q.rows[0],q.rows[1],m),bStep(q.rows[0],m,b),'So the equation is <b>'+eqHTML(m,b)+'</b>'];
+      return q;
+    }
+  }
+}
+function startTest(){
+  T.name=$('tName').value.trim()||'Student';try{localStorage.setItem('sbName',T.name)}catch(e){}
+  const types=Object.keys(SKILLS);
+  T.qs=shuffle(types.slice()).map(t=>genQ(t,false)).concat(shuffle(types.slice()).map(t=>genQ(t,true)));
+  T.i=0;T.right=0;T.streak=0;T.log=[];T.t0=Date.now();T.state='q';
+  $('tStart').hidden=true;$('tReport').hidden=true;$('tQ').hidden=false;showQ();
+}
+function showQ(){
+  const q=T.qs[T.i];T.locked=false;
+  $('tNum').textContent=(T.i+1)+'/10';$('tRight').textContent=T.right;$('tStreak').textContent=T.streak;
+  $('tSkill').textContent=SKILLS[q.type]+(q.hard?' · level 2':' · level 1');
+  $('tPrompt').innerHTML=q.promptH;
+  if(q.rows){$('tTable').hidden=false;$('tTable').innerHTML='<tr><th>x</th>'+q.rows.map(r=>'<td>'+neg(r.x)+'</td>').join('')+'</tr><tr><th>y</th>'+q.rows.map(r=>'<td>'+neg(r.y)+'</td>').join('')+'</tr>'}
+  else $('tTable').hidden=true;
+  $('tOpts').innerHTML='';q.opts.forEach(o=>{const bt=document.createElement('button');bt.className='opt';bt.innerHTML=q.optH(o);bt.onclick=()=>tAnswer(o,bt);o.el=bt;$('tOpts').appendChild(bt)});
+  $('tFeedback').hidden=true;$('tNext').hidden=true;
+}
+function tAnswer(o,bt){
+  if(T.locked)return;T.locked=true;const q=T.qs[T.i];
+  q.opts.forEach(x=>{if(x.ok)x.el.classList.add('right')});
+  if(o.ok){T.right++;T.streak++;win();shake=8;pop(T.streak>=3?'ON FIRE!':'CORRECT!');boom(0,q.b,css('--good'),30);
+    $('tVerdict').textContent='Correct! Here is the work:';$('tVerdict').className='verdict good';}
+  else{bt.classList.add('wrong');T.streak=0;lose();$('tVerdict').textContent='Not quite. Here is how to solve it:';$('tVerdict').className='verdict bad';}
+  T.log.push({type:q.type,ok:!!o.ok,promptT:q.promptT,ansT:q.ansT});
+  $('tSteps').innerHTML=q.steps.map(s=>'<li>'+s+'</li>').join('');$('tFeedback').hidden=false;
+  $('tRight').textContent=T.right;$('tStreak').textContent=T.streak;
+  $('tNext').textContent=T.i===9?'SEE REPORT CARD':'NEXT';$('tNext').hidden=false;
+}
+$('tNext').onclick=()=>{T.i++;if(T.i>=10)report();else showQ()};
+$('tGo').onclick=startTest;
+$('tName').addEventListener('keydown',e=>{if(e.key==='Enter')startTest()});
+$('tAgain').onclick=()=>{T.state='start';$('tReport').hidden=true;$('tStart').hidden=false};
+function report(){
+  T.state='report';const secs=Math.round((Date.now()-T.t0)/1000),pct=T.right*10;
+  const time=Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0');
+  const verdict=T.right===10?'Slope Master':T.right>=8?'Strong':T.right>=6?'Getting there':'Keep practicing';
+  const when=new Date().toLocaleString();
+  let h='<div class="big">'+T.right+'/10</div><div class="who"><b>'+esc(T.name)+'</b> · '+pct+'% · '+verdict+'<br>'+when+' · time '+time+'</div>';
+  let txt='Slope Blaster Mastery Test\nName: '+T.name+'\nScore: '+T.right+'/10 ('+pct+'%) · '+verdict+'\nDate: '+when+'\nTime: '+time+'\n\nSkills:\n';
+  Object.keys(SKILLS).forEach(k=>{const r=T.log.filter(l=>l.type===k),n=r.filter(l=>l.ok).length;
+    const tag=n===2?['ok','Mastered']:n===1?['mid','Almost']:['no','Practice'];
+    h+='<div class="skillrow"><span>'+SKILLS[k]+' ('+n+'/2)</span><span class="tag '+tag[0]+'">'+tag[1]+'</span></div>';
+    txt+='- '+SKILLS[k]+': '+n+'/2 ('+tag[1]+')\n';});
+  const miss=T.log.filter(l=>!l.ok);
+  if(miss.length){h+='<div class="help"><b>Review these:</b></div><ul class="missed">'+miss.map(l=>'<li>'+esc(l.promptT)+' → '+esc(l.ansT)+'</li>').join('')+'</ul>';
+    txt+='\nMissed:\n'+miss.map(l=>'- '+l.promptT+' → '+l.ansT).join('\n')+'\n';}
+  T.reportText=txt;$('tReportBody').innerHTML=h;
+  $('tQ').hidden=true;$('tReport').hidden=false;$('tCopy').textContent='COPY RESULTS';
+  if(T.right>=8){confetti();win()}
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+$('tCopy').onclick=()=>{
+  const done=()=>{$('tCopy').textContent='COPIED ✓'};
+  const fallback=()=>{const ta=document.createElement('textarea');ta.value=T.reportText;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}ta.remove()};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(T.reportText).then(done,fallback);else fallback();
+};
+function drawTest(){
+  drawGrid();
+  if(T.state!=='q'){drawFx();return}
+  const q=T.qs[T.i],yel=css('--laser'),pink=css('--target');
+  if(q.type==='slope'){ if(T.locked){drawLine(q.m.v,q.b,yel,5);drawRiseRun(q.p1.x,q.p1.y,q.p2.x,q.p2.y)} drawPt(q.p1.x,q.p1.y,pink);drawPt(q.p2.x,q.p2.y,pink); }
+  else if(q.type==='intercept'){ drawLine(q.m.v,q.b,yel,6); if(T.locked)drawPt(0,q.b,pink); }
+  else if(q.type==='graph'){ drawLine(q.m.v,q.b,yel,6); if(T.locked){if(Math.abs(q.b+q.m.n)<=R)drawRiseRun(0,q.b,q.m.d,q.b+q.m.n);drawPt(0,q.b,pink,true,true)} }
+  else if(q.type==='pointslope'){ if(T.locked){drawLine(q.m.v,q.b,yel,5);drawPt(0,q.b,css('--blue'))} drawPt(q.p1.x,q.p1.y,pink); }
+  else if(q.type==='table'){ if(T.locked){drawLine(q.m.v,q.b,yel,5);q.rows.forEach(r=>drawPt(r.x,r.y,pink,false))} }
+  drawFx();
 }
 
 // ---------- mode + loop ----------
 let mode='blast';
-function setMode(m){mode=m;$('tabBlast').setAttribute('aria-selected',m==='blast');$('tabSpeed').setAttribute('aria-selected',m==='speed');
-  $('blastSide').hidden=m!=='blast';$('speedSide').hidden=m!=='speed';
-  if(m==='speed'&&!SP.cur&&!SP.over)newQ(); if(m==='speed'&&!SP.locked)SP.start=performance.now();}
-$('tabBlast').onclick=()=>setMode('blast');$('tabSpeed').onclick=()=>setMode('speed');
-function loop(t){ if(mode==='blast')drawBlast(t); else drawSpeed(t); requestAnimationFrame(loop); }
-newLevel();
+const MODES={learn:['tabLearn','learnSide'],blast:['tabBlast','blastSide'],speed:['tabSpeed','speedSide'],test:['tabTest','testSide']};
+function setMode(m){mode=m;
+  Object.entries(MODES).forEach(([k,[tab,side]])=>{$(tab).setAttribute('aria-selected',k===m);$(side).hidden=k!==m});
+  if(m==='speed'&&!SP.cur&&!SP.over)newQ(); if(m==='speed'&&!SP.locked)SP.start=performance.now();
+  if(m==='learn')updateLearn();
+}
+Object.keys(MODES).forEach(k=>{$(MODES[k][0]).onclick=()=>setMode(k)});
+const DRAW={learn:drawLearn,blast:drawBlast,speed:drawSpeed,test:drawTest};
+function loop(t){ DRAW[mode](t); requestAnimationFrame(loop); }
+newLevel();updateLearn();
+window.__sb={T,B,SP,genQ,setMode};
 requestAnimationFrame(loop);
 })();
 </script>
@@ -414,7 +727,7 @@ requestAnimationFrame(loop);
 <script>
 document.getElementById('fsBtn').onclick=function(){var d=document.documentElement;
 if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
-else{(d.requestFullscreen||d.webkitRequestFullscreen).call(d)}};
+else{var r=d.requestFullscreen||d.webkitRequestFullscreen;if(r)r.call(d)}};
 </script>
 </body>
 </html>
