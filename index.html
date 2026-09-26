@@ -141,6 +141,8 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
 .lbrow .nm{font-size:clamp(18px,2.6vw,24px);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lbrow .pts{font-family:"Bungee",Impact,sans-serif;font-size:clamp(20px,3vw,28px);color:var(--laser);font-variant-numeric:tabular-nums}
 .lbrow.top1{border:2px solid var(--laser)}
+.rules{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;background:var(--bg);border-radius:10px;padding:10px 14px;font-size:15px;color:var(--dim)}
+.rules b{color:var(--laser)}
 .viewnote{font-size:12px;color:var(--dim);text-align:center}
 </style>
 </head>
@@ -324,7 +326,8 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
       </div>
     </div>
     <div class="card"><div class="help" id="hCount">0 students joined</div><div class="chips" id="hChips"></div></div>
-    <div class="board2" id="hBoard" hidden><h2>🏆 Leaderboard</h2><div id="hBoardRows"></div><div class="viewnote">Points only. Safe to show on the projector. Tap Teacher View to see who needs help (keep that private).</div></div>
+    <div class="board2" id="hBoard" hidden><h2>🏆 Leaderboard</h2>
+      <div class="rules"><b>How points work:</b><span>✓ Right answer = <b>100</b></span><span>🔥 2 in a row = <b>200</b> (2×)</span><span>🔥🔥 3 in a row = <b>300</b> (3×)</span><span>⚡ 4+ in a row = <b>200</b> each (2×)</span><span>✗ Wrong = 0, streak resets</span></div><div id="hBoardRows"></div><div class="viewnote">Points only. Safe to show on the projector. Tap Teacher View to see who needs help (keep that private).</div></div>
     <div class="viewnote" id="hPrivate" hidden>🔒 Teacher view: only you should see this. Tap Leaderboard before projecting.</div>
     <div class="skillgrid" id="hSkills" hidden></div>
     <div class="tablewrap" id="hTableWrap" hidden><table class="rtable" id="hTable"></table></div>
@@ -836,7 +839,7 @@ function report(){
   const miss=T.log.filter(l=>!l.ok);
   if(miss.length){h+='<div class="help"><b>Review these:</b></div><ul class="missed">'+miss.map(l=>'<li>'+esc(l.promptT)+' → '+esc(l.ansT)+'</li>').join('')+'</ul>';
     txt+='\nMissed:\n'+miss.map(l=>'- '+l.promptT+' → '+l.ansT).join('\n')+'\n';}
-  if(T.cls){h+='<div class="verdict good">✓ Your results were sent to your teacher.</div>';try{T.cls.send({t:'done',right:T.right,secs})}catch(e){}}
+  if(T.cls){try{T.cls.send({t:'done',right:T.right,secs})}catch(e){}}
   $('tAgain').hidden=!!T.cls;
   T.reportText=txt;$('tReportBody').innerHTML=h;
   $('tQ').hidden=true;$('tReport').hidden=false;$('tCopy').textContent='COPY RESULTS';
@@ -902,16 +905,18 @@ function hostData(conn,d){
     const same=H.students.find(s=>s.name===name);
     if(same&&!same.online){st=same}
     else if(same){let k=2;while(H.students.some(s=>s.name===name+' '+k))k++;name=name+' '+k}
-    if(!st){st={name,answers:Array(10).fill(null),pts:Array(10).fill(0),done:false,secs:0};H.students.push(st)}
+    if(!st){st={name,answers:Array(10).fill(null),done:false,secs:0};H.students.push(st)}
     st.conn=conn;st.online=true;
     conn.send({t:'welcome',name:st.name,started:H.started,seed:H.seed});
     renderDash();return;
   }
   if(!st)return;
-  if(d.t==='ans'&&Number.isInteger(d.i)&&d.i>=0&&d.i<10){st.answers[d.i]=!!d.ok;const ms=Math.max(0,+d.ms||0);
-    st.pts[d.i]=d.ok?100+Math.round(100*Math.max(0,1-ms/30000)):0;renderDash()}
+  if(d.t==='ans'&&Number.isInteger(d.i)&&d.i>=0&&d.i<10){st.answers[d.i]=!!d.ok;renderDash()}
   if(d.t==='done'){st.done=true;st.secs=+d.secs||0;renderDash()}
 }
+// points: right = 100 × streak multiplier (1st 1×, 2 in a row 2×, 3 in a row 3×, 4+ in a row 2×); wrong = 0 and resets the streak
+const mult=k=>k===1?1:k===3?3:2;
+function pointsOf(st){let k=0,t=0;st.answers.forEach(a=>{if(a===true){k++;t+=100*mult(k)}else if(a===false)k=0});return t}
 function stats(st){const right=st.answers.filter(a=>a===true).length,answered=st.answers.filter(a=>a!==null).length;
   const bySkill={};Object.keys(SKILLS).forEach(k=>bySkill[k]={right:0,miss:0});
   if(H.qs)st.answers.forEach((a,i)=>{if(a===null)return;const k=H.qs[i].type;a?bySkill[k].right++:bySkill[k].miss++});
@@ -927,7 +932,7 @@ function renderDash(){
   $('hSkills').hidden=$('hTableWrap').hidden=$('hPrivate').hidden=!H.started||!teacher;
   $('hChips').parentElement.hidden=H.started&&!teacher;
   if(H.started&&!teacher){
-    const rows=H.students.map(s=>({name:s.name,p:s.pts.reduce((a,b)=>a+b,0)})).sort((a,b)=>b.p-a.p||a.name.localeCompare(b.name));
+    const rows=H.students.map(s=>({name:s.name,p:pointsOf(s)})).sort((a,b)=>b.p-a.p||a.name.localeCompare(b.name));
     const top=rows.slice(0,10),max=Math.max(1,...rows.map(r=>r.p)),medal=['🥇','🥈','🥉'];
     $('hBoardRows').innerHTML=top.map((r,i)=>'<div class="lbrow'+(i===0&&r.p>0?' top1':'')+'" style="margin-bottom:8px"><div class="bar" style="width:'+Math.round(r.p/max*100)+'%"></div><div class="rk">'+(medal[i]||i+1)+'</div><div class="nm">'+esc(r.name)+'</div><div class="pts">'+r.p+'</div></div>').join('')+
       (rows.length>10?'<div class="viewnote">Top 10 shown</div>':'')+(rows.length?'':'<div class="viewnote">No players yet</div>');
@@ -958,7 +963,7 @@ $('hStart').onclick=()=>{
 };
 $('hCopy').onclick=()=>{
   let txt='Slope Blaster Class Results · code '+H.code+' · '+new Date().toLocaleString()+'\nName\tScore\tPoints'+(H.qs?H.qs.map((q,i)=>'\tQ'+(i+1)).join(''):'')+'\tNeeds help with\n';
-  H.students.forEach(s=>{const x=stats(s);txt+=s.name+'\t'+x.right+'/10\t'+s.pts.reduce((a,b)=>a+b,0)+(H.qs?s.answers.map(a=>'\t'+(a===null?'-':a?'right':'wrong')).join(''):'')+'\t'+Object.keys(SKILLS).filter(k=>x.bySkill[k].miss>0).map(k=>SKILLS[k]).join('; ')+'\n'});
+  H.students.forEach(s=>{const x=stats(s);txt+=s.name+'\t'+x.right+'/10\t'+pointsOf(s)+(H.qs?s.answers.map(a=>'\t'+(a===null?'-':a?'right':'wrong')).join(''):'')+'\t'+Object.keys(SKILLS).filter(k=>x.bySkill[k].miss>0).map(k=>SKILLS[k]).join('; ')+'\n'});
   const done=()=>{$('hCopy').textContent='COPIED ✓';setTimeout(()=>$('hCopy').textContent='COPY RESULTS',1500)};
   const fb=()=>{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}ta.remove()};
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,fb);else fb();
@@ -1021,7 +1026,7 @@ Object.keys(MODES).forEach(k=>{$(MODES[k][0]).onclick=()=>setMode(k)});
 const DRAW={learn:drawLearn,blast:drawBlast,speed:drawSpeed,test:drawTest,class:t=>{drawGrid();drawFx()}};
 function loop(t){ DRAW[mode](t); requestAnimationFrame(loop); }
 newLevel();updateLearn();
-window.__sb={explainWrong,renderDash,T,B,SP,H,genQ,setMode,buildQs,withSeed};
+window.__sb={pointsOf,explainWrong,renderDash,T,B,SP,H,genQ,setMode,buildQs,withSeed};
 requestAnimationFrame(loop);
 })();
 </script>
