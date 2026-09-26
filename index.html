@@ -74,6 +74,10 @@ button.pm:hover{background:var(--btnh)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--text);outline-offset:2px}
 .pop{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-family:"Bungee",Impact,sans-serif;font-size:clamp(28px,7vw,54px);color:var(--good);text-shadow:0 0 20px rgba(61,220,151,.6);pointer-events:none;opacity:0;transition:opacity .2s,transform .5s;white-space:nowrap}
 .pop.show{opacity:1;transform:translate(-50%,-70%)}
+.pop.bad{color:var(--bad);text-shadow:0 0 20px rgba(255,107,90,.6)}
+.whybox{background:rgba(255,107,90,.1);border:1px solid rgba(255,107,90,.35);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.5;display:flex;flex-direction:column;gap:4px}
+.whybox .tip{color:var(--laser)}
+.msg .tip{color:var(--laser)}
 .rank{text-align:center;font-weight:700;color:var(--laser);letter-spacing:.08em;text-transform:uppercase;font-size:13px}
 .boss{color:var(--target);font-family:"Bungee",Impact,sans-serif;text-align:center;font-size:18px}
 .help{font-size:14px;color:var(--dim);line-height:1.5}
@@ -283,6 +287,7 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
         <div class="opts" id="tOpts"></div>
         <div id="tFeedback" hidden>
           <div class="verdict" id="tVerdict"></div>
+          <div class="whybox" id="tWhy" hidden></div>
           <ol class="steps" id="tSteps"></ol>
         </div>
         <button class="fire" id="tNext" hidden>NEXT</button>
@@ -397,7 +402,48 @@ function drawFx(){for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;
   if(p.life<=0){parts.splice(i,1);continue}ctx.globalAlpha=Math.min(1,p.life);ctx.fillStyle=p.col;ctx.fillRect(p.x-3,p.y-3,6,6)}ctx.globalAlpha=1}
 function rankFor(sc){const r=[[0,'Rookie'],[500,'Cadet'],[1200,'Line Rider'],[2500,'Slope Sniper'],[4500,'Intercept Ace'],[7000,'Slope Legend']];let t=r[0][1];r.forEach(([v,n])=>{if(sc>=v)t=n});return t}
 let best=0;try{best=+localStorage.getItem('sbBest')||0}catch(e){}
-function pop(text){const p=$('pop');p.textContent=text;p.classList.add('show');setTimeout(()=>p.classList.remove('show'),650)}
+function pop(text,bad){const p=$('pop');p.textContent=text;p.classList.toggle('bad',!!bad);p.classList.add('show');clearTimeout(pop.t);pop.t=setTimeout(()=>p.classList.remove('show'),bad?900:650)}
+const OOPS=['OOPS!','SO CLOSE!','NOT QUITE!','ALMOST!'];
+const oops=()=>pop(pick(OOPS),true);
+// why a wrong answer is wrong + a tip, based on which mistake it matches
+function explainWrong(q,o){
+  const m=q.m,b=q.b,same=(f,g)=>f.n===g.n&&f.d===g.d;
+  const recip=f=>f.n!==0&&frac(f.d*Math.sign(f.n),Math.abs(f.n));
+  if(!o)return['Time ran out.','Find b first (where the line crosses the y-axis), then count rise ÷ run. You will get faster with practice.'];
+  if(q.type==='slope'){
+    const f=o.f;
+    if(f.v===-m.v)return['Your slope has the wrong sign.','Subtract in the same order on top and bottom: (y₂ − y₁) ÷ (x₂ − x₁). Watch out for minus signs.'];
+    if(recip(m)&&same(f,recip(m)))return['You put run over rise, so the fraction is upside down.','Rise (the change in y) always goes on top. Run (the change in x) goes on the bottom.'];
+    if(recip(m)&&f.v===-recip(m).v)return['The fraction is upside down and the sign is wrong.','Rise (change in y) goes on top. Then check: does the line go up (+) or down (−) from left to right?'];
+    return['That is not the right rise ÷ run.','Write out (y₂ − y₁) ÷ (x₂ − x₁) step by step. Subtracting a negative means adding.'];
+  }
+  if(q.type==='intercept'){
+    const v=o.v,xi=m.n?-b*m.d/m.n:null;
+    if(v===-b&&b!==0)return['Right number, wrong sign.','Above the x-axis is positive, below it is negative.'];
+    if(xi!==null&&v===xi)return['That is the x-intercept, where the line crosses the x-axis.','The y-intercept is on the y-axis, the up-and-down line in the middle.'];
+    if(Math.abs(v-b)<=2)return['Close! You are off by '+Math.abs(v-b)+'.','Count the grid squares carefully from 0 along the y-axis.'];
+    return['That is not where the line crosses the y-axis.','Put your finger on the y-axis and slide to where the line touches it. That y-value is b.'];
+  }
+  // equation answers: graph, pointslope, table, speed round, laser
+  const om=o.m,ob=o.b,mOK=same(om,m),bOK=ob===b;
+  if(mOK&&!bOK){
+    if(q.type==='pointslope'){const mx=m.n*q.p1.x/m.d,y1=q.p1.y;
+      if(ob===y1+mx)return['The slope is right, but a sign got flipped when you distributed.','m(x − x₁) = mx − m·x₁. Keep the minus sign, then add y₁ to both sides.'];
+      if(ob===y1-q.p1.x)return['You forgot to multiply the slope by x₁.','Distribute: m(x − x₁) = mx − m·x₁. Multiply m by both things inside the ( ).'];
+    }
+    if(ob===-b)return['The slope is right, but b has the wrong sign.','b is where the line crosses the y-axis. Above 0 is positive, below 0 is negative.'];
+    if(q.type==='table')return['The slope is right, but b is off.','b is the y-value when x = 0. Plug in a point: b = y − m·x.'];
+    return['The slope is right, but b is off.','Look at where the line crosses the y-axis. That point is (0, b).'];
+  }
+  if(bOK&&!mOK){
+    if(om.v===-m.v)return['b is right, but the slope has the wrong sign.','Going left to right: uphill = positive slope, downhill = negative slope.'];
+    if(recip(m)&&same(om,recip(m)))return['b is right, but the slope is upside down (run ÷ rise).','Slope = rise ÷ run. The up/down change goes on top.'];
+    return['b is right, but the slope is off.','From the y-intercept, count how far up or down (rise) and how far right (run) to the next point.'];
+  }
+  if(om.v===-m.v&&ob===-b)return['Both signs are flipped.','Check each part: is the line going up or down? Is b above or below 0?'];
+  return['Both the slope and b are off.','Go one step at a time: find b first, then count rise ÷ run.'];
+}
+function whyHTML(w){return '<div><b>Why it’s wrong:</b> '+w[0]+'</div><div class="tip">💡 <b>Tip for next time:</b> '+w[1]+'</div>'}
 
 // ---------- drawing ----------
 function drawGrid(){
@@ -554,11 +600,12 @@ function resolveShot(a){
       $('msg').innerHTML='Out of shots. Here is how to get it:<ol class="steps"><li>'+slopeStep(p1,p2,A.m)+'</li><li>'+bStep(p1,A.m,A.b)+'</li><li>Answer: <b>'+eqHTML(A.m,A.b)+'</b></li></ol>';$('msg').className='msg bad';
       $('fire').textContent='TRY A NEW LEVEL';$('hint').disabled=true;
     } else {
-      shake=8;let tip=hits>0?'Grazed '+hits+' target'+(hits>1?'s':'')+'. ':'Missed. ';
+      shake=8;oops();let tip='<b>Oops! '+(hits>0?'You hit '+hits+' of '+B.targets.length+' targets.':'Missed.')+'</b> ';
       const am=A.m.v;
-      if(Math.abs(B.m.v-am)>1e-9) tip+=(B.m.v>am?'Slope is too big. Lower m.':'Slope is too small. Raise m.');
-      else tip+='Slope is right! Now fix b, where the line crosses the y-axis.';
-      $('msg').textContent=tip;$('msg').className='msg bad';
+      if(Math.abs(B.m.v-am)>1e-9) tip+=(B.m.v>am?'Your slope is too big. Lower m.':'Your slope is too small. Raise m.');
+      else tip+='Your slope is right! Now fix b, where the line crosses the y-axis.';
+      const w=explainWrong({type:'graph',m:A.m,b:A.b},{m:B.m,b:B.b});
+      $('msg').innerHTML=tip+'<br><span class="tip">💡 '+w[1]+'</span>';$('msg').className='msg bad';
     }
   }
   updateBlastUI();
@@ -635,7 +682,8 @@ function answer(o,bt){
     boom(0,b,css('--good'),30);shake=10;$('smsg').textContent='Correct! +'+gain+(SP.combo>2?'  Combo x'+SP.combo:'');$('smsg').className='msg good';win();pop('NICE!');
   } else {
     if(bt)bt.classList.add('wrong');SP.combo=1;
-    $('smsg').innerHTML=(o?'Not quite. ':'Time! ')+'It crosses the y-axis at (0, '+neg(b)+'), so b = '+neg(b)+'. '+riseRunWords(m);$('smsg').className='msg bad';lose();
+    const w=explainWrong({type:'graph',m,b},o);oops();
+    $('smsg').innerHTML='<b>'+(o?'Oops! ':'Time! ')+'</b>'+w[0]+' The answer: b = '+neg(b)+'. '+riseRunWords(m)+'<br><span class="tip">💡 '+w[1]+'</span>';$('smsg').className='msg bad';lose();
   }
   $('sscore').textContent=SP.score;$('scombo').textContent='x'+SP.combo;
   SP.q++;if(SP.q>10)$('snext').textContent='SEE RESULTS';$('snext').hidden=false;$('snext').focus();
@@ -749,7 +797,8 @@ function tAnswer(o,bt){
   q.opts.forEach(x=>{if(x.ok)x.el.classList.add('right')});
   if(o.ok){T.right++;T.streak++;win();shake=8;pop(T.streak>=3?'ON FIRE!':'CORRECT!');boom(0,q.b,css('--good'),30);
     $('tVerdict').textContent='Correct! Here is the work:';$('tVerdict').className='verdict good';}
-  else{bt.classList.add('wrong');T.streak=0;lose();$('tVerdict').textContent='Not quite. Here is how to solve it:';$('tVerdict').className='verdict bad';}
+  else{bt.classList.add('wrong');T.streak=0;lose();oops();shake=6;$('tVerdict').textContent='Oops! Not quite. Here is how to solve it:';$('tVerdict').className='verdict bad';}
+  $('tWhy').hidden=!!o.ok;if(!o.ok)$('tWhy').innerHTML=whyHTML(explainWrong(q,o));
   T.log.push({type:q.type,ok:!!o.ok,promptT:q.promptT,ansT:q.ansT});
   if(T.cls){try{T.cls.send({t:'ans',i:T.i,ok:!!o.ok})}catch(e){}}
   $('tSteps').innerHTML=q.steps.map(s=>'<li>'+s+'</li>').join('');$('tFeedback').hidden=false;
@@ -947,7 +996,7 @@ Object.keys(MODES).forEach(k=>{$(MODES[k][0]).onclick=()=>setMode(k)});
 const DRAW={learn:drawLearn,blast:drawBlast,speed:drawSpeed,test:drawTest,class:t=>{drawGrid();drawFx()}};
 function loop(t){ DRAW[mode](t); requestAnimationFrame(loop); }
 newLevel();updateLearn();
-window.__sb={T,B,SP,H,genQ,setMode,buildQs,withSeed};
+window.__sb={explainWrong,T,B,SP,H,genQ,setMode,buildQs,withSeed};
 requestAnimationFrame(loop);
 })();
 </script>
