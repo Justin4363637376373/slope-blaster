@@ -132,6 +132,16 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:6px;vertical-align:middle}
 .dot.off{background:var(--dim)}
 .sep{text-align:center;color:var(--dim);font-size:13px}
+.board2{background:var(--panel);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.board2 h2{font-size:clamp(24px,4vw,36px);text-align:center}
+.lbrow{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;background:var(--btn);border-radius:12px;padding:10px 14px;position:relative;overflow:hidden}
+.lbrow .bar{position:absolute;left:0;top:0;bottom:0;background:rgba(255,210,63,.12);z-index:0;transition:width .5s}
+.lbrow>*:not(.bar){position:relative;z-index:1}
+.lbrow .rk{font-family:"Bungee",Impact,sans-serif;font-size:24px;text-align:center}
+.lbrow .nm{font-size:clamp(18px,2.6vw,24px);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbrow .pts{font-family:"Bungee",Impact,sans-serif;font-size:clamp(20px,3vw,28px);color:var(--laser);font-variant-numeric:tabular-nums}
+.lbrow.top1{border:2px solid var(--laser)}
+.viewnote{font-size:12px;color:var(--dim);text-align:center}
 </style>
 </head>
 <body>
@@ -308,11 +318,14 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
       <div class="help" id="hInfo">Connecting…</div>
       <div class="dashbtns">
         <button class="fire" id="hStart" disabled>START QUIZ</button>
+        <button class="fire alt" id="hView" hidden>🔒 TEACHER VIEW</button>
         <button class="fire alt" id="hCopy">COPY RESULTS</button>
         <button class="ghost" id="hEnd">End class</button>
       </div>
     </div>
     <div class="card"><div class="help" id="hCount">0 students joined</div><div class="chips" id="hChips"></div></div>
+    <div class="board2" id="hBoard" hidden><h2>🏆 Leaderboard</h2><div id="hBoardRows"></div><div class="viewnote">Points only. Safe to show on the projector. Tap Teacher View to see who needs help (keep that private).</div></div>
+    <div class="viewnote" id="hPrivate" hidden>🔒 Teacher view: only you should see this. Tap Leaderboard before projecting.</div>
     <div class="skillgrid" id="hSkills" hidden></div>
     <div class="tablewrap" id="hTableWrap" hidden><table class="rtable" id="hTable"></table></div>
   </section>
@@ -783,7 +796,7 @@ function startTest(qs){
   $('tStart').hidden=true;$('tReport').hidden=true;$('tQ').hidden=false;showQ();
 }
 function showQ(){
-  const q=T.qs[T.i];T.locked=false;
+  const q=T.qs[T.i];T.locked=false;T.qStart=Date.now();
   $('tNum').textContent=(T.i+1)+'/10';$('tRight').textContent=T.right;$('tStreak').textContent=T.streak;
   $('tSkill').textContent=SKILLS[q.type]+(q.hard?' · level 2':' · level 1');
   $('tPrompt').innerHTML=q.promptH;
@@ -800,7 +813,7 @@ function tAnswer(o,bt){
   else{bt.classList.add('wrong');T.streak=0;lose();oops();shake=6;$('tVerdict').textContent='Oops! Not quite. Here is how to solve it:';$('tVerdict').className='verdict bad';}
   $('tWhy').hidden=!!o.ok;if(!o.ok)$('tWhy').innerHTML=whyHTML(explainWrong(q,o));
   T.log.push({type:q.type,ok:!!o.ok,promptT:q.promptT,ansT:q.ansT});
-  if(T.cls){try{T.cls.send({t:'ans',i:T.i,ok:!!o.ok})}catch(e){}}
+  if(T.cls){try{T.cls.send({t:'ans',i:T.i,ok:!!o.ok,ms:Date.now()-(T.qStart||Date.now())})}catch(e){}}
   $('tSteps').innerHTML=q.steps.map(s=>'<li>'+s+'</li>').join('');$('tFeedback').hidden=false;
   $('tRight').textContent=T.right;$('tStreak').textContent=T.streak;
   $('tNext').textContent=T.i===9?'SEE REPORT CARD':'NEXT';$('tNext').hidden=false;
@@ -862,7 +875,7 @@ function showMain(on){document.querySelectorAll('.tab[role=tab]').forEach(t=>t.h
 const H={peer:null,code:'',students:[],started:false,seed:0,qs:null};
 function hostStart(){
   cMsg('');showMain(false);
-  H.students=[];H.started=false;H.qs=null;renderDash();
+  H.students=[];H.started=false;H.qs=null;H.view='board';renderDash();
   const tryOpen=(attempt)=>{
     H.code=Array.from({length:5},()=>ALPH[Math.floor(Math.random()*ALPH.length)]).join('');
     let p;try{p=mkPeer(PREFIX+H.code)}catch(e){$('hInfo').textContent='Could not load Class Mode. Check your internet and refresh.';return}
@@ -889,13 +902,14 @@ function hostData(conn,d){
     const same=H.students.find(s=>s.name===name);
     if(same&&!same.online){st=same}
     else if(same){let k=2;while(H.students.some(s=>s.name===name+' '+k))k++;name=name+' '+k}
-    if(!st){st={name,answers:Array(10).fill(null),done:false,secs:0};H.students.push(st)}
+    if(!st){st={name,answers:Array(10).fill(null),pts:Array(10).fill(0),done:false,secs:0};H.students.push(st)}
     st.conn=conn;st.online=true;
     conn.send({t:'welcome',name:st.name,started:H.started,seed:H.seed});
     renderDash();return;
   }
   if(!st)return;
-  if(d.t==='ans'&&Number.isInteger(d.i)&&d.i>=0&&d.i<10){st.answers[d.i]=!!d.ok;renderDash()}
+  if(d.t==='ans'&&Number.isInteger(d.i)&&d.i>=0&&d.i<10){st.answers[d.i]=!!d.ok;const ms=Math.max(0,+d.ms||0);
+    st.pts[d.i]=d.ok?100+Math.round(100*Math.max(0,1-ms/30000)):0;renderDash()}
   if(d.t==='done'){st.done=true;st.secs=+d.secs||0;renderDash()}
 }
 function stats(st){const right=st.answers.filter(a=>a===true).length,answered=st.answers.filter(a=>a!==null).length;
@@ -907,7 +921,17 @@ function renderDash(){
   $('hCount').textContent=n+(n===1?' student':' students')+' joined'+(n?' · '+on+' online':'')+(H.started?' · '+H.students.filter(s=>s.done).length+' finished':'');
   $('hChips').innerHTML=H.students.map(s=>'<span class="chip'+(s.online?'':' off')+'">'+esc(s.name)+'</span>').join('');
   $('hStart').disabled=!n||H.started||!H.peer||!H.peer.open;$('hStart').textContent=H.started?'QUIZ RUNNING':'START QUIZ';
-  $('hSkills').hidden=$('hTableWrap').hidden=!H.started;
+  const teacher=H.view==='teacher';
+  $('hView').hidden=!H.started;$('hView').textContent=teacher?'🏆 LEADERBOARD':'🔒 TEACHER VIEW';
+  $('hBoard').hidden=!H.started||teacher;
+  $('hSkills').hidden=$('hTableWrap').hidden=$('hPrivate').hidden=!H.started||!teacher;
+  $('hChips').parentElement.hidden=H.started&&!teacher;
+  if(H.started&&!teacher){
+    const rows=H.students.map(s=>({name:s.name,p:s.pts.reduce((a,b)=>a+b,0)})).sort((a,b)=>b.p-a.p||a.name.localeCompare(b.name));
+    const top=rows.slice(0,10),max=Math.max(1,...rows.map(r=>r.p)),medal=['🥇','🥈','🥉'];
+    $('hBoardRows').innerHTML=top.map((r,i)=>'<div class="lbrow'+(i===0&&r.p>0?' top1':'')+'" style="margin-bottom:8px"><div class="bar" style="width:'+Math.round(r.p/max*100)+'%"></div><div class="rk">'+(medal[i]||i+1)+'</div><div class="nm">'+esc(r.name)+'</div><div class="pts">'+r.p+'</div></div>').join('')+
+      (rows.length>10?'<div class="viewnote">Top 10 shown</div>':'')+(rows.length?'':'<div class="viewnote">No players yet</div>');
+  }
   if(!H.started)return;
   const S=H.students.map(s=>({s,x:stats(s)}));
   $('hSkills').innerHTML=Object.keys(SKILLS).map(k=>{
@@ -925,15 +949,16 @@ function renderDash(){
   });
   $('hTable').innerHTML=h;
 }
+$('hView').onclick=()=>{H.view=H.view==='teacher'?'board':'teacher';renderDash()};
 $('hStart').onclick=()=>{
-  if(H.started||!H.students.length)return;
+  if(H.started||!H.students.length)return;H.view='board';
   H.seed=Math.floor(Math.random()*2147483646)+1;H.qs=withSeed(H.seed,buildQs);H.started=true;
   H.students.forEach(s=>{if(s.online)try{s.conn.send({t:'start',seed:H.seed})}catch(e){}});
   renderDash();beep(660,.1);
 };
 $('hCopy').onclick=()=>{
-  let txt='Slope Blaster Class Results · code '+H.code+' · '+new Date().toLocaleString()+'\nName\tScore'+(H.qs?H.qs.map((q,i)=>'\tQ'+(i+1)).join(''):'')+'\tNeeds help with\n';
-  H.students.forEach(s=>{const x=stats(s);txt+=s.name+'\t'+x.right+'/10'+(H.qs?s.answers.map(a=>'\t'+(a===null?'-':a?'right':'wrong')).join(''):'')+'\t'+Object.keys(SKILLS).filter(k=>x.bySkill[k].miss>0).map(k=>SKILLS[k]).join('; ')+'\n'});
+  let txt='Slope Blaster Class Results · code '+H.code+' · '+new Date().toLocaleString()+'\nName\tScore\tPoints'+(H.qs?H.qs.map((q,i)=>'\tQ'+(i+1)).join(''):'')+'\tNeeds help with\n';
+  H.students.forEach(s=>{const x=stats(s);txt+=s.name+'\t'+x.right+'/10\t'+s.pts.reduce((a,b)=>a+b,0)+(H.qs?s.answers.map(a=>'\t'+(a===null?'-':a?'right':'wrong')).join(''):'')+'\t'+Object.keys(SKILLS).filter(k=>x.bySkill[k].miss>0).map(k=>SKILLS[k]).join('; ')+'\n'});
   const done=()=>{$('hCopy').textContent='COPIED ✓';setTimeout(()=>$('hCopy').textContent='COPY RESULTS',1500)};
   const fb=()=>{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}ta.remove()};
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,fb);else fb();
@@ -996,7 +1021,7 @@ Object.keys(MODES).forEach(k=>{$(MODES[k][0]).onclick=()=>setMode(k)});
 const DRAW={learn:drawLearn,blast:drawBlast,speed:drawSpeed,test:drawTest,class:t=>{drawGrid();drawFx()}};
 function loop(t){ DRAW[mode](t); requestAnimationFrame(loop); }
 newLevel();updateLearn();
-window.__sb={explainWrong,T,B,SP,H,genQ,setMode,buildQs,withSeed};
+window.__sb={explainWrong,renderDash,T,B,SP,H,genQ,setMode,buildQs,withSeed};
 requestAnimationFrame(loop);
 })();
 </script>
