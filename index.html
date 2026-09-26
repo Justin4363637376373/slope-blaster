@@ -474,8 +474,8 @@ function drawGrid(){
   ctx.strokeStyle=css('--axis');ctx.lineWidth=3;
   ctx.beginPath();ctx.moveTo(X(0),Y(R));ctx.lineTo(X(0),Y(-R));ctx.stroke();
   ctx.beginPath();ctx.moveTo(X(-R),Y(0));ctx.lineTo(X(R),Y(0));ctx.stroke();
-  ctx.fillStyle=css('--dim');ctx.font='600 16px "Chakra Petch",sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
-  for(let i=-R;i<=R;i+=2){ if(i===0)continue;
+  ctx.fillStyle=css('--dim');ctx.font='600 14px "Chakra Petch",sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+  for(let i=-R;i<=R;i++){ if(i===0)continue;
     ctx.fillText(i,X(i),Y(0)+6);
     ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(i,X(0)-6,Y(i));ctx.textAlign='center';ctx.textBaseline='top';
   }
