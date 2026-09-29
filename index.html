@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Slope Blaster</title>
-<meta name="description" content="A free linear equations game: slope, y-intercept, slope-intercept and point-slope form. Explore, play, and take a mastery test with a report card.">
+<meta name="description" content="A free linear equations game: slope, y-intercept, line types (positive, negative, zero, undefined slope), and equation forms (slope-intercept, point-slope, standard). Explore, play, and take a mastery test with a report card.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@400;600;700&display=swap">
 <style>
@@ -69,6 +69,12 @@ button.pm:hover{background:var(--btnh)}
 .opt .m,.opt .bb{color:inherit}
 .opt.right{background:var(--good);color:#04210f;border-color:var(--good)}
 .opt.wrong{background:var(--bad);color:#2a0400;border-color:var(--bad)}
+.opts .opt:last-child:nth-child(odd){grid-column:1/-1}
+.opt.txt{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:16px}
+.opt small{display:block;font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:12px;opacity:.75;margin-top:2px}
+details.cheat{font-size:14px;color:var(--dim);line-height:1.6;border:1px dashed var(--btnh);border-radius:10px;padding:8px 10px}
+details.cheat summary{cursor:pointer;color:var(--text);font-weight:700}
+details.cheat b{color:var(--text)}
 .timer{height:10px;background:var(--grid);border-radius:6px;overflow:hidden}
 .timer div{height:100%;background:var(--laser);width:100%}
 button:focus-visible,input:focus-visible{outline:3px solid var(--text);outline-offset:2px}
@@ -155,6 +161,8 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
       <button class="tab" id="tabLearn" role="tab" aria-selected="false">Learn</button>
       <button class="tab" id="tabBlast" role="tab" aria-selected="true">Laser Mode</button>
       <button class="tab" id="tabSpeed" role="tab" aria-selected="false">Speed Round</button>
+      <button class="tab" id="tabType" role="tab" aria-selected="false">Line Type</button>
+      <button class="tab" id="tabForm" role="tab" aria-selected="false">Equation Form</button>
       <button class="tab" id="tabTest" role="tab" aria-selected="false">Mastery Test</button>
       <button class="tab" id="tabClass" role="tab" aria-selected="false">Class Mode</button>
       <button class="tab" id="fsBtn" aria-label="Full screen">⛶ Full screen</button>
@@ -260,6 +268,61 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
       </div>
     </div>
 
+    <!-- Line type -->
+    <div class="side" id="ltSide" hidden>
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><small>Question</small><strong id="ltNum">1/10</strong></div>
+          <div class="stat"><small>Correct</small><strong id="ltRight">0</strong></div>
+          <div class="stat"><small>Streak</small><strong id="ltStreak">0</strong></div>
+        </div>
+        <div class="rank" id="ltBest">Best: 0/10</div>
+      </div>
+      <div class="card">
+        <div class="help">Is the slope <b>positive</b>, <b>negative</b>, <b>zero</b>, or <b>undefined</b>? Some questions show a graph, some show an equation.</div>
+        <div class="prompt" id="ltPrompt"></div>
+        <div class="opts" id="ltOpts"></div>
+        <div id="ltFb" hidden>
+          <div class="verdict" id="ltVerdict"></div>
+          <div class="whybox" id="ltWhy" hidden></div>
+          <ol class="steps" id="ltSteps"></ol>
+        </div>
+        <button class="fire" id="ltNext" hidden>NEXT</button>
+        <div class="kbd"><kbd>1</kbd>–<kbd>4</kbd> answer · <kbd>Enter</kbd> next</div>
+      </div>
+    </div>
+
+    <!-- Equation form -->
+    <div class="side" id="fmSide" hidden>
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><small>Question</small><strong id="fmNum">1/10</strong></div>
+          <div class="stat"><small>Correct</small><strong id="fmRight">0</strong></div>
+          <div class="stat"><small>Streak</small><strong id="fmStreak">0</strong></div>
+        </div>
+        <div class="rank" id="fmBest">Best: 0/10</div>
+      </div>
+      <div class="card">
+        <div class="help">Which <b>form</b> is this equation written in? After you answer, you see the line and its slope.</div>
+        <div class="prompt" id="fmPrompt"></div>
+        <div class="opts" id="fmOpts"></div>
+        <div id="fmFb" hidden>
+          <div class="verdict" id="fmVerdict"></div>
+          <div class="whybox" id="fmWhy" hidden></div>
+          <ol class="steps" id="fmSteps"></ol>
+        </div>
+        <button class="fire" id="fmNext" hidden>NEXT</button>
+        <details class="cheat"><summary>Show the 5 patterns</summary>
+          <div><b>Slope-intercept:</b> y = mx + b</div>
+          <div><b>Point-slope:</b> y − y₁ = m(x − x₁)</div>
+          <div><b>Standard:</b> Ax + By = C</div>
+          <div><b>Horizontal:</b> y = a number</div>
+          <div><b>Vertical:</b> x = a number</div>
+        </details>
+        <div class="kbd"><kbd>1</kbd>–<kbd>5</kbd> answer · <kbd>Enter</kbd> next</div>
+      </div>
+    </div>
+
     <!-- Class mode -->
     <div class="side" id="classSide" hidden>
       <div class="card" id="cChoose">
@@ -339,10 +402,12 @@ details.teach ul{margin:8px 0 0;padding-left:20px}
       <li><b>Learn:</b> an interactive explorer. Change m and b and see the line, the rise/run triangle, and a table of values update live.</li>
       <li><b>Laser Mode:</b> students build y = mx + b to hit targets. Levels move from positive whole-number slopes to negative and fractional slopes. Missed levels show the worked solution.</li>
       <li><b>Speed Round:</b> 10 timed graph-to-equation questions for fluency.</li>
+      <li><b>Line Type:</b> 10 questions. Students decide if a line's slope is positive, negative, zero, or undefined, from a graph or from an equation (slope-intercept, point-slope, standard form, y = #, x = #). Every answer shows why.</li>
+      <li><b>Equation Form:</b> 10 questions. Students name the form of an equation: slope-intercept, point-slope, standard, horizontal, or vertical. After each answer the line is graphed and rewritten in slope-intercept form.</li>
       <li><b>Mastery Test:</b> 10 untimed questions, 2 per skill, easy then harder (fractional slopes). Each question shows step-by-step work. Students finish with a report card they can screenshot or copy into your LMS.</li>
       <li><b>Class Mode:</b> click Host a Class to get a code. Students open this site on their own device, go to Class Mode, and join with the code. Press Start, then watch live results: every answer, each student’s score, and a "needs help" list for each skill. Keep your host tab open until everyone finishes.</li>
       <li><b>Aligned to:</b> CCSS 8.EE.B.6, 8.F.A.3, 8.F.B.4, and HSF-LE.A.2.</li>
-      <li>Free, no login, no ads. Works on Chromebooks, iPads, and phones. Nothing is sent anywhere.</li>
+      <li>Free, no login, no ads. Works on Chromebooks, iPads, and phones. Only Class Mode uses the internet: it connects student and teacher devices through PeerJS, a free connection service, so names and right/wrong answers reach the teacher. Nothing is saved on a server, and the other modes send nothing.</li>
     </ul>
   </details>
 </div>
@@ -655,6 +720,11 @@ document.addEventListener('keydown',e=>{
     }
     return;
   }
+  if(mode==='type'||mode==='form'){const p=mode==='type'?'lt':'fm';
+    if(/^[1-5]$/.test(e.key)){const b=$(p+'Opts').querySelectorAll('.opt')[+e.key-1];if(b){e.preventDefault();b.click()}return}
+    if((e.key==='Enter'||e.key===' ')&&!onBtn){if(click(p+'Next'))e.preventDefault()}
+    return;
+  }
   const box=mode==='speed'?'opts':'tOpts',next=mode==='speed'?'snext':'tNext';
   if(/^[1-4]$/.test(e.key)){const b=$(box).querySelectorAll('.opt')[+e.key-1];if(b){e.preventDefault();b.click()}return}
   if((e.key==='Enter'||e.key===' ')&&!onBtn){if(click(next))e.preventDefault()}
@@ -863,6 +933,164 @@ function drawTest(){
   drawFx();
 }
 
+// ---------- shared: any line (slanted, flat, vertical) ----------
+// line = {kind:'s',m,b} | {kind:'h',k} | {kind:'v',k}
+function drawVLine(k,color,w){
+  ctx.save();ctx.beginPath();ctx.rect(PAD,PAD,S-2*PAD,S-2*PAD);ctx.clip();
+  ctx.strokeStyle=color;ctx.lineWidth=w;ctx.lineCap='round';ctx.shadowColor=color;ctx.shadowBlur=16;
+  ctx.beginPath();ctx.moveTo(X(k),Y(R));ctx.lineTo(X(k),Y(-R));ctx.stroke();ctx.restore();
+}
+function drawAny(L,color,w){ if(L.kind==='v')drawVLine(L.k,color,w); else drawLine(L.kind==='h'?0:L.m.v,L.kind==='h'?L.k:L.b,color,w); }
+// standard form Ax + By = C from y = (n/d)x + b, with A > 0
+function stdOf(m,b){let A=-m.n,B=m.d,C=m.d*b;if(A<0){A=-A;B=-B;C=-C}return {A,B,C}}
+function stdHTML(o){
+  const a=o.A===1?'':o.A===-1?'−':neg(o.A), bAbs=Math.abs(o.B);
+  return a+'x'+(o.B<0?' − ':' + ')+(bAbs===1?'':bAbs)+'y = '+neg(o.C);
+}
+function stdSolve(o,m,b){ // steps to get y alone
+  return 'Solve for y: '+(o.B===1?'':o.B===-1?'−':neg(o.B))+'y = '+(o.A===1?'−':'−'+o.A)+'x'+tz(o.C)+'. Divide by '+neg(o.B)+': <b>'+eqHTML(m,b)+'</b>, so <b class="m">m = '+fH(m)+'</b>.';
+}
+function nonZeroK(){let k=0;while(k===0)k=rnd(-7,7);return k}
+function deck(types,n){const d=[];while(d.length<n)d.push(...shuffle(types.slice()));return shuffle(d.slice(0,n))}
+
+// generic 10-question quiz used by Line Type and Equation Form
+function makeQuiz(cfg){
+  const Q={i:0,right:0,streak:0,cur:null,locked:true,over:false,started:false,best:0,qs:[]};
+  try{Q.best=+localStorage.getItem(cfg.bestKey)||0}catch(e){}
+  const el=s=>$(cfg.p+s);
+  function hud(){el('Num').textContent=Math.min(Q.i+1,10)+'/10';el('Right').textContent=Q.right;el('Streak').textContent=Q.streak;el('Best').textContent='Best: '+Q.best+'/10'}
+  function start(){Q.started=true;Q.i=0;Q.right=0;Q.streak=0;Q.over=false;Q.qs=cfg.build();el('Next').textContent='NEXT';show()}
+  function show(){
+    const q=Q.qs[Q.i];Q.cur=q;Q.locked=false;
+    el('Prompt').innerHTML=q.promptH;
+    el('Opts').innerHTML='';
+    cfg.choices.forEach((c,n)=>{const bt=document.createElement('button');bt.className='opt txt';
+      bt.innerHTML='<span class="k">'+(n+1)+'</span>'+c.label+(c.sub?'<small>'+c.sub+'</small>':'');
+      bt.onclick=()=>pickIt(c.id,bt);c.el=bt;el('Opts').appendChild(bt)});
+    el('Fb').hidden=true;el('Next').hidden=true;hud();
+  }
+  function pickIt(id,bt){
+    if(Q.locked)return;Q.locked=true;const q=Q.cur,ok=id===q.ans;
+    cfg.choices.forEach(c=>{if(c.id===q.ans)c.el.classList.add('right')});
+    if(ok){Q.right++;Q.streak++;win();shake=8;pop(Q.streak>=3?'ON FIRE!':'CORRECT!');
+      el('Verdict').textContent='Correct! Here is why:';el('Verdict').className='verdict good'}
+    else{bt.classList.add('wrong');Q.streak=0;lose();oops();shake=6;
+      el('Verdict').textContent='Oops! The answer is '+cfg.name(q.ans)+'.';el('Verdict').className='verdict bad'}
+    el('Why').hidden=ok;if(!ok)el('Why').innerHTML=whyHTML(cfg.why(q,id));
+    el('Steps').innerHTML=q.steps.map(s=>'<li>'+s+'</li>').join('');el('Fb').hidden=false;
+    Q.i++;hud();el('Num').textContent=Q.i+'/10';
+    el('Next').textContent=Q.i>=10?'SEE SCORE':'NEXT';el('Next').hidden=false;
+  }
+  function end(){
+    Q.over=true;Q.cur=null;Q.locked=true;
+    const nb=Q.right>Q.best;if(nb){Q.best=Q.right;try{localStorage.setItem(cfg.bestKey,Q.best)}catch(e){}}
+    const verdict=Q.right===10?'Perfect!':Q.right>=8?'Strong':Q.right>=6?'Getting there':'Keep practicing';
+    el('Prompt').innerHTML='<span class="big">'+Q.right+'/10</span>'+verdict+(nb?' · NEW BEST!':'');
+    el('Opts').innerHTML='';el('Fb').hidden=true;hud();el('Num').textContent='10/10';
+    el('Next').textContent='PLAY AGAIN';el('Next').hidden=false;
+    if(Q.right>=8){confetti();win()}
+  }
+  el('Next').onclick=()=>{if(Q.over){start();return}if(Q.i>=10)end();else show()};
+  function draw(){drawGrid();if(Q.cur)cfg.draw(Q.cur,Q.locked);drawFx()}
+  return {Q,start,draw};
+}
+
+// ---------- LINE TYPE ----------
+const LTN={pos:'positive',neg:'negative',zero:'zero',undef:'undefined'};
+function genType(t,i){
+  const q={ans:t};
+  const graph=i<3||Math.random()<.5;
+  if(t==='zero'){const k=nonZeroK();q.line={kind:'h',k};
+    q.eqH='y = '+neg(k);
+    q.steps=graph?['The line is <b>flat</b> (horizontal).','Going across, it never goes up or down, so rise = 0. Slope = 0 ÷ run = <b>0</b>.','Its equation is <b>y = '+neg(k)+'</b>. Flat lines are always y = a number.']
+                 :['<b>y = '+neg(k)+'</b> has no x in it, so y is '+neg(k)+' at every point.','That makes a <b>flat</b> (horizontal) line. Rise = 0, so slope = <b>0</b>.'];
+  } else if(t==='undef'){const k=nonZeroK();q.line={kind:'v',k};
+    q.eqH='x = '+neg(k);
+    q.steps=graph?['The line goes <b>straight up and down</b> (vertical).','Moving along it, x never changes, so run = 0. Slope = rise ÷ 0, and you can’t divide by 0. Slope is <b>undefined</b>.','Its equation is <b>x = '+neg(k)+'</b>. Vertical lines are always x = a number.']
+                 :['<b>x = '+neg(k)+'</b> has no y in it, so x is '+neg(k)+' at every point.','That makes a <b>vertical</b> line. Run = 0, and you can’t divide by 0, so slope is <b>undefined</b>.'];
+  } else {
+    let m,b,xs;
+    do{m=pick(slopePool(9).filter(f=>t==='pos'?f.n>0:f.n<0));b=rnd(-6,6);xs=pointsOnLine(m,b).filter(x=>x!==0&&yAt(m,b,x)!==0)}while(!xs.length);
+    q.line={kind:'s',m,b};
+    const dir=t==='pos'?'uphill':'downhill',sign=t==='pos'?'more than 0, so it is <b>positive</b>':'less than 0, so it is <b>negative</b>';
+    if(graph){q.steps=['Read it <b>left to right</b>, like a book.','The line goes <b>'+dir+'</b>, so the slope is '+(t==='pos'?'<b>positive</b>':'<b>negative</b>')+'.','Its equation is <b>'+eqHTML(m,b)+'</b>. Slope m = '+fH(m)+'.']}
+    else{
+      const forms=i>=5?['si','ps','std']:['si','si','ps'];const f=pick(forms);q.form=f;
+      if(f==='si'){q.eqH=eqHTML(m,b);q.steps=['In y = mx + b, the slope is the number in front of x: <b class="m">m = '+fH(m)+'</b>.','m is '+sign+'. The line goes '+dir+'.']}
+      if(f==='ps'){const x1=pick(xs),y1=yAt(m,b,x1);q.p1={x:x1,y:y1};q.eqH=psHTML(m,x1,y1);
+        q.steps=['This is point-slope form, y − y₁ = m(x − x₁). The slope is the number in front of the ( ): <b class="m">m = '+fH(m)+'</b>.','m is '+sign+'. The line goes '+dir+'.']}
+      if(f==='std'){const o=stdOf(m,b);q.eqH=stdHTML(o);
+        q.steps=['This is standard form, Ax + By = C. Get y alone to see the slope.',stdSolve(o,m,b),'m is '+sign+'. The line goes '+dir+'. Shortcut: in Ax + By = C, slope = −A ÷ B.']}
+    }
+  }
+  q.graph=graph||!q.eqH;
+  q.promptH=q.graph?'What type of slope does the yellow line have?':'What type of slope does this line have?<span class="big">'+q.eqH+'</span>';
+  return q;
+}
+function whyType(q,p){
+  const t=q.ans,eq=!q.graph;
+  if((t==='zero'&&p==='undef')||(t==='undef'&&p==='zero'))return['You mixed up flat and vertical.','Flat (horizontal) = slope 0. Vertical = undefined. Trick: y = 3 is a flat line, x = 3 is a vertical line.'];
+  if((t==='pos'&&p==='neg')||(t==='neg'&&p==='pos')){
+    if(eq&&q.form==='std')return['The sign got flipped.','In Ax + By = C, the slope is −A ÷ B. Don’t forget that minus sign.'];
+    if(eq)return['You read the sign of m backwards.','Find the number in front of x (or in front of the parentheses). A minus sign means negative.'];
+    return['You read the direction backwards.','Always read left to right, like a book. Uphill = positive, downhill = negative.'];
+  }
+  if(t==='pos'||t==='neg')return['This line is slanted, so its slope is not 0 or undefined.','Only flat lines have slope 0, and only vertical lines are undefined. Any tilt means positive or negative.'];
+  if(t==='zero')return[eq?'y = a number has no x, so the line is flat.':'This line is flat, so it doesn’t go uphill or downhill.','Flat means rise = 0, so the slope is 0.'];
+  return[eq?'x = a number has no y, so the line is vertical.':'A vertical line doesn’t go uphill or downhill. It goes straight up.','Run = 0 and you can’t divide by 0, so the slope is undefined.'];
+}
+const LT=makeQuiz({p:'lt',bestKey:'sbTypeBest',
+  choices:[{id:'pos',label:'↗ Positive',sub:'uphill'},{id:'neg',label:'↘ Negative',sub:'downhill'},{id:'zero',label:'→ Zero',sub:'flat'},{id:'undef',label:'↑ Undefined',sub:'vertical'}],
+  name:id=>LTN[id],
+  build:()=>deck(['pos','neg','zero','undef'],10).map((t,i)=>genType(t,i)),
+  why:whyType,
+  draw:(q,locked)=>{if(q.graph||locked){drawAny(q.line,css('--laser'),6);if(locked&&q.p1)drawPt(q.p1.x,q.p1.y,css('--target'))}}
+});
+
+// ---------- EQUATION FORM ----------
+const FN={si:'slope-intercept form',ps:'point-slope form',std:'standard form',h:'a horizontal line',v:'a vertical line'};
+const SPOT={si:'y is alone on one side, then mx + b. Example: y = 2x + 1.',
+  ps:'y minus a number on the left, and m times (x minus a number) on the right. Example: y − 3 = 2(x + 1).',
+  std:'x and y are on the same side, and a plain number is on the other side. Example: 2x + 3y = 6.',
+  h:'Only y and a number, no x. Example: y = 4.',
+  v:'Only x and a number, no y. Example: x = −2.'};
+function genForm(t){
+  const q={ans:t};
+  if(t==='h'){const k=nonZeroK();q.line={kind:'h',k};q.eqH='y = '+neg(k);
+    q.steps=['<b>y = '+neg(k)+'</b> has only y and a number. That is a <b>horizontal</b> line.','y is always '+neg(k)+', so the line is flat. Slope = <b>0</b>.']}
+  else if(t==='v'){const k=nonZeroK();q.line={kind:'v',k};q.eqH='x = '+neg(k);
+    q.steps=['<b>x = '+neg(k)+'</b> has only x and a number. That is a <b>vertical</b> line.','x is always '+neg(k)+', so the line goes straight up and down. Slope is <b>undefined</b>.']}
+  else{
+    let m,b,xs;
+    do{m=pick(slopePool(9));b=rnd(-6,6);xs=pointsOnLine(m,b).filter(x=>x!==0&&yAt(m,b,x)!==0)}while(!xs.length||(t==='si'&&b===0&&Math.random()<.5));
+    q.line={kind:'s',m,b};
+    if(t==='si'){q.eqH=eqHTML(m,b);
+      q.steps=['Pattern: <b>y = mx + b</b>. y is alone, then the x term, then a number. That is <b>slope-intercept form</b>.','Slope <b class="m">m = '+fH(m)+'</b>, y-intercept <b class="bb">b = '+neg(b)+'</b>.']}
+    if(t==='ps'){const x1=pick(xs),y1=yAt(m,b,x1);q.p1={x:x1,y:y1};q.eqH=psHTML(m,x1,y1);
+      q.steps=['Pattern: <b>y − y₁ = m(x − x₁)</b>. It has parentheses with x inside. That is <b>point-slope form</b>.','It tells you a point, <b>'+pt(q.p1)+'</b>, and the slope, <b class="m">m = '+fH(m)+'</b>. Watch the signs: x − ('+neg(x1)+') means x₁ = '+neg(x1)+'.','Same line in slope-intercept form: <b>'+eqHTML(m,b)+'</b>.']}
+    if(t==='std'){const o=stdOf(m,b);q.eqH=stdHTML(o);
+      q.steps=['Pattern: <b>Ax + By = C</b>. x and y are on the same side, a number on the other. That is <b>standard form</b>.',stdSolve(o,m,b)]}
+  }
+  q.promptH='What form is this equation in?<span class="big">'+q.eqH+'</span>';
+  return q;
+}
+function whyForm(q,p){
+  const t=q.ans;
+  if((t==='h'&&p==='v')||(t==='v'&&p==='h'))return['You mixed up horizontal and vertical.','y = a number is flat (horizontal). x = a number stands straight up (vertical).'];
+  if(t==='si'&&p==='std')return['y is alone on one side, so this is not standard form.',SPOT.si];
+  if(t==='std'&&p==='si')return['x and y are on the same side, so y is not alone yet.',SPOT.std];
+  if(t==='ps')return['The parentheses with x − a number inside are the giveaway.',SPOT.ps];
+  return['This is '+FN[t]+', not '+FN[p]+'.',SPOT[t]];
+}
+const FM=makeQuiz({p:'fm',bestKey:'sbFormBest',
+  choices:[{id:'si',label:'Slope-intercept'},{id:'ps',label:'Point-slope'},{id:'std',label:'Standard'},{id:'h',label:'Horizontal',sub:'y = #'},{id:'v',label:'Vertical',sub:'x = #'}],
+  name:id=>FN[id],
+  build:()=>deck(['si','ps','std','h','v'],10).map(genForm),
+  why:whyForm,
+  draw:(q,locked)=>{if(locked){drawAny(q.line,css('--laser'),6);if(q.p1)drawPt(q.p1.x,q.p1.y,css('--target'));
+    else if(q.line.kind==='s'&&Math.abs(q.line.b)<=R)drawPt(0,q.line.b,css('--target'),true,true)}}
+});
+
 // ---------- CLASS MODE ----------
 const ALPH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PREFIX='slopeblaster-v1-';
@@ -1016,17 +1244,19 @@ $('cCode').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCas
 
 // ---------- mode + loop ----------
 let mode='blast';
-const MODES={learn:['tabLearn','learnSide'],blast:['tabBlast','blastSide'],speed:['tabSpeed','speedSide'],test:['tabTest','testSide'],class:['tabClass','classSide']};
+const MODES={learn:['tabLearn','learnSide'],blast:['tabBlast','blastSide'],speed:['tabSpeed','speedSide'],type:['tabType','ltSide'],form:['tabForm','fmSide'],test:['tabTest','testSide'],class:['tabClass','classSide']};
 function setMode(m){mode=m;
   Object.entries(MODES).forEach(([k,[tab,side]])=>{$(tab).setAttribute('aria-selected',k===m);$(side).hidden=k!==m});
   if(m==='speed'&&!SP.cur&&!SP.over)newQ(); if(m==='speed'&&!SP.locked)SP.start=performance.now();
   if(m==='learn')updateLearn();
+  if(m==='type'&&!LT.Q.started)LT.start();
+  if(m==='form'&&!FM.Q.started)FM.start();
 }
 Object.keys(MODES).forEach(k=>{$(MODES[k][0]).onclick=()=>setMode(k)});
-const DRAW={learn:drawLearn,blast:drawBlast,speed:drawSpeed,test:drawTest,class:t=>{drawGrid();drawFx()}};
+const DRAW={learn:drawLearn,blast:drawBlast,speed:drawSpeed,type:LT.draw,form:FM.draw,test:drawTest,class:t=>{drawGrid();drawFx()}};
 function loop(t){ DRAW[mode](t); requestAnimationFrame(loop); }
 newLevel();updateLearn();
-window.__sb={pointsOf,explainWrong,renderDash,T,B,SP,H,genQ,setMode,buildQs,withSeed};
+window.__sb={LT,FM,genType,genForm,pointsOf,explainWrong,renderDash,T,B,SP,H,genQ,setMode,buildQs,withSeed};
 requestAnimationFrame(loop);
 })();
 </script>
